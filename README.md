@@ -300,25 +300,98 @@ resource "zoneeu_domain_nameserver" "external" {
 
 ## Importing Existing Resources
 
-All resources support importing:
+If you have existing DNS records or domains in Zone.EU that you want to manage with Terraform, you need to import them into your Terraform state first. Otherwise, Terraform will try to create new records and fail with a `zone_conflict` error.
 
-### DNS Records
+### Finding Record IDs
+
+You can find record IDs using the Zone.EU API:
+
 ```bash
-# Format: zone/record_id
-terraform import zoneeu_dns_a_record.www example.com/123
+# List all A records for a zone
+curl -u "username:apikey" https://api.zone.eu/v2/dns/example.com/a
+
+# List all CNAME records
+curl -u "username:apikey" https://api.zone.eu/v2/dns/example.com/cname
+
+# List all records of any type (replace 'a' with: aaaa, cname, mx, txt, ns, srv, caa, tlsa, sshfp, url)
+curl -u "username:apikey" https://api.zone.eu/v2/dns/example.com/{type}
 ```
 
-### Domain
+The response will include the `id` field for each record.
+
+### Import Commands
+
+#### DNS Records
+
+```bash
+# Format: terraform import RESOURCE_ADDRESS ZONE/RECORD_ID
+
+# A Record
+terraform import zoneeu_dns_a_record.www example.com/123
+
+# AAAA Record
+terraform import zoneeu_dns_aaaa_record.www example.com/456
+
+# CNAME Record
+terraform import zoneeu_dns_cname_record.blog example.com/789
+
+# MX Record
+terraform import zoneeu_dns_mx_record.mail example.com/101
+
+# TXT Record
+terraform import zoneeu_dns_txt_record.spf example.com/102
+
+# NS Record
+terraform import zoneeu_dns_ns_record.subdomain example.com/103
+
+# SRV Record
+terraform import zoneeu_dns_srv_record.sip example.com/104
+
+# CAA Record
+terraform import zoneeu_dns_caa_record.letsencrypt example.com/105
+
+# TLSA Record
+terraform import zoneeu_dns_tlsa_record.https example.com/106
+
+# SSHFP Record
+terraform import zoneeu_dns_sshfp_record.server example.com/107
+
+# URL Record
+terraform import zoneeu_dns_url_record.redirect example.com/108
+```
+
+#### Importing with for_each
+
+When using `for_each`, use quotes around the resource address:
+
+```bash
+# Example: importing into a for_each resource
+terraform import 'zoneeu_dns_a_record.root["example.com"]' example.com/123
+terraform import 'module.tenant["lv"].zoneeu_dns_a_record.root["vermare.lv"]' vermare.lv/456
+terraform import 'module.tenant["ee"].zoneeu_dns_cname_record.caddy["caddy.vermare.ee"]' vermare.ee/789
+```
+
+#### Domain
+
 ```bash
 # Format: domain_name
 terraform import zoneeu_domain.example example.com
 ```
 
-### Domain Nameserver
+#### Domain Nameserver
+
 ```bash
 # Format: domain/hostname
 terraform import zoneeu_domain_nameserver.ns1 example.com/ns1.example.com
 ```
+
+### Common Import Errors
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `zone_conflict` | Record already exists | Import the existing record instead of creating |
+| `not found` | Wrong record ID or zone | Verify the ID using the API |
+| `invalid import id` | Wrong format | Use `zone/record_id` format |
 
 ## API Rate Limits
 
