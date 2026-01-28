@@ -389,9 +389,62 @@ terraform import zoneeu_domain_nameserver.ns1 example.com/ns1.example.com
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| `zone_conflict` | Record already exists | Import the existing record instead of creating |
+| `zone_conflict` | Record already exists | Import the existing record or use `force_recreate = true` |
 | `not found` | Wrong record ID or zone | Verify the ID using the API |
 | `invalid import id` | Wrong format | Use `zone/record_id` format |
+
+## Force Recreate Option
+
+All DNS record resources support the `force_recreate` attribute as an alternative to importing existing records. When set to `true`, the provider will automatically delete any existing record with the same name before creating the new one.
+
+### Usage
+
+```hcl
+resource "zoneeu_dns_a_record" "www" {
+  zone           = "example.com"
+  name           = "www.example.com"
+  destination    = "192.168.1.1"
+  force_recreate = true  # Delete existing record with same name if it exists
+}
+```
+
+### When to Use
+
+| Scenario | Recommended Approach |
+|----------|---------------------|
+| Taking over existing infrastructure | Import existing records |
+| Clean slate / fresh setup | Use `force_recreate = true` |
+| Migrating from another DNS provider | Use `force_recreate = true` |
+| CI/CD pipelines with ephemeral state | Use `force_recreate = true` |
+| Production with state preservation | Import existing records |
+
+### Important Notes
+
+- **Default is `false`**: By default, the provider will not delete existing records
+- **Only affects Create**: The `force_recreate` flag only applies during resource creation
+- **Matches by name**: The provider finds existing records by matching the `name` field
+- **First match only**: If multiple records exist with the same name, only the first one is deleted
+- **Data loss warning**: Use with caution - this will delete existing records!
+
+### Example with Multiple Records
+
+```hcl
+locals {
+  dns_records = {
+    www  = "192.168.1.1"
+    api  = "192.168.1.2"
+    mail = "192.168.1.3"
+  }
+}
+
+resource "zoneeu_dns_a_record" "records" {
+  for_each       = local.dns_records
+  zone           = "example.com"
+  name           = "${each.key}.example.com"
+  destination    = each.value
+  force_recreate = true
+}
+```
 
 ## API Rate Limits
 

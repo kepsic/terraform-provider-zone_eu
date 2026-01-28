@@ -267,6 +267,33 @@ func (c *Client) GetZone(zone string) (*DNSZone, error) {
 
 // ==================== A Records ====================
 
+// ListARecords retrieves all A records for a zone
+func (c *Client) ListARecords(zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/a", zone), nil)
+	if err != nil {
+		return nil, err
+	}
+	var records []DNSRecord
+	if err := json.Unmarshal(resp, &records); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return records, nil
+}
+
+// FindARecordByName finds an A record by name in a zone
+func (c *Client) FindARecordByName(zone, name string) (*DNSRecord, error) {
+	records, err := c.ListARecords(zone)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range records {
+		if r.Name == name {
+			return &r, nil
+		}
+	}
+	return nil, nil // Not found
+}
+
 func (c *Client) GetARecord(zone, id string) (*DNSRecord, error) {
 	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/a/%s", zone, id), nil)
 	if err != nil {
@@ -297,6 +324,33 @@ func (c *Client) DeleteARecord(zone, id string) error {
 }
 
 // ==================== AAAA Records ====================
+
+// ListAAAARecords retrieves all AAAA records for a zone
+func (c *Client) ListAAAARecords(zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/aaaa", zone), nil)
+	if err != nil {
+		return nil, err
+	}
+	var records []DNSRecord
+	if err := json.Unmarshal(resp, &records); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return records, nil
+}
+
+// FindAAAARecordByName finds an AAAA record by name in a zone
+func (c *Client) FindAAAARecordByName(zone, name string) (*DNSRecord, error) {
+	records, err := c.ListAAAARecords(zone)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range records {
+		if r.Name == name {
+			return &r, nil
+		}
+	}
+	return nil, nil // Not found
+}
 
 func (c *Client) GetAAAARecord(zone, id string) (*DNSRecord, error) {
 	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/aaaa/%s", zone, id), nil)
@@ -329,6 +383,33 @@ func (c *Client) DeleteAAAARecord(zone, id string) error {
 
 // ==================== CNAME Records ====================
 
+// ListCNAMERecords retrieves all CNAME records for a zone
+func (c *Client) ListCNAMERecords(zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/cname", zone), nil)
+	if err != nil {
+		return nil, err
+	}
+	var records []DNSRecord
+	if err := json.Unmarshal(resp, &records); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return records, nil
+}
+
+// FindCNAMERecordByName finds a CNAME record by name in a zone
+func (c *Client) FindCNAMERecordByName(zone, name string) (*DNSRecord, error) {
+	records, err := c.ListCNAMERecords(zone)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range records {
+		if r.Name == name {
+			return &r, nil
+		}
+	}
+	return nil, nil // Not found
+}
+
 func (c *Client) GetCNAMERecord(zone, id string) (*DNSRecord, error) {
 	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/cname/%s", zone, id), nil)
 	if err != nil {
@@ -359,6 +440,33 @@ func (c *Client) DeleteCNAMERecord(zone, id string) error {
 }
 
 // ==================== MX Records ====================
+
+// ListMXRecords retrieves all MX records for a zone
+func (c *Client) ListMXRecords(zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/mx", zone), nil)
+	if err != nil {
+		return nil, err
+	}
+	var records []DNSRecord
+	if err := json.Unmarshal(resp, &records); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return records, nil
+}
+
+// FindMXRecordByName finds an MX record by name in a zone
+func (c *Client) FindMXRecordByName(zone, name string) (*DNSRecord, error) {
+	records, err := c.ListMXRecords(zone)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range records {
+		if r.Name == name {
+			return &r, nil
+		}
+	}
+	return nil, nil // Not found
+}
 
 func (c *Client) GetMXRecord(zone, id string) (*DNSRecord, error) {
 	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/mx/%s", zone, id), nil)
@@ -391,6 +499,33 @@ func (c *Client) DeleteMXRecord(zone, id string) error {
 
 // ==================== TXT Records ====================
 
+// ListTXTRecords retrieves all TXT records for a zone
+func (c *Client) ListTXTRecords(zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/txt", zone), nil)
+	if err != nil {
+		return nil, err
+	}
+	var records []DNSRecord
+	if err := json.Unmarshal(resp, &records); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return records, nil
+}
+
+// FindTXTRecordByName finds a TXT record by name in a zone
+func (c *Client) FindTXTRecordByName(zone, name string) (*DNSRecord, error) {
+	records, err := c.ListTXTRecords(zone)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range records {
+		if r.Name == name {
+			return &r, nil
+		}
+	}
+	return nil, nil // Not found
+}
+
 func (c *Client) GetTXTRecord(zone, id string) (*DNSRecord, error) {
 	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/txt/%s", zone, id), nil)
 	if err != nil {
@@ -421,6 +556,33 @@ func (c *Client) DeleteTXTRecord(zone, id string) error {
 }
 
 // ==================== NS Records ====================
+
+// ListNSRecords retrieves all NS records for a zone
+func (c *Client) ListNSRecords(zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/ns", zone), nil)
+	if err != nil {
+		return nil, err
+	}
+	var records []DNSRecord
+	if err := json.Unmarshal(resp, &records); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return records, nil
+}
+
+// FindNSRecordByName finds an NS record by name in a zone
+func (c *Client) FindNSRecordByName(zone, name string) (*DNSRecord, error) {
+	records, err := c.ListNSRecords(zone)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range records {
+		if r.Name == name {
+			return &r, nil
+		}
+	}
+	return nil, nil // Not found
+}
 
 func (c *Client) GetNSRecord(zone, id string) (*DNSRecord, error) {
 	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/ns/%s", zone, id), nil)
@@ -453,6 +615,33 @@ func (c *Client) DeleteNSRecord(zone, id string) error {
 
 // ==================== SRV Records ====================
 
+// ListSRVRecords retrieves all SRV records for a zone
+func (c *Client) ListSRVRecords(zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/srv", zone), nil)
+	if err != nil {
+		return nil, err
+	}
+	var records []DNSRecord
+	if err := json.Unmarshal(resp, &records); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return records, nil
+}
+
+// FindSRVRecordByName finds an SRV record by name in a zone
+func (c *Client) FindSRVRecordByName(zone, name string) (*DNSRecord, error) {
+	records, err := c.ListSRVRecords(zone)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range records {
+		if r.Name == name {
+			return &r, nil
+		}
+	}
+	return nil, nil // Not found
+}
+
 func (c *Client) GetSRVRecord(zone, id string) (*DNSRecord, error) {
 	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/srv/%s", zone, id), nil)
 	if err != nil {
@@ -483,6 +672,33 @@ func (c *Client) DeleteSRVRecord(zone, id string) error {
 }
 
 // ==================== CAA Records ====================
+
+// ListCAARecords retrieves all CAA records for a zone
+func (c *Client) ListCAARecords(zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/caa", zone), nil)
+	if err != nil {
+		return nil, err
+	}
+	var records []DNSRecord
+	if err := json.Unmarshal(resp, &records); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return records, nil
+}
+
+// FindCAARecordByName finds a CAA record by name in a zone
+func (c *Client) FindCAARecordByName(zone, name string) (*DNSRecord, error) {
+	records, err := c.ListCAARecords(zone)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range records {
+		if r.Name == name {
+			return &r, nil
+		}
+	}
+	return nil, nil // Not found
+}
 
 func (c *Client) GetCAARecord(zone, id string) (*DNSRecord, error) {
 	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/caa/%s", zone, id), nil)
@@ -515,6 +731,33 @@ func (c *Client) DeleteCAARecord(zone, id string) error {
 
 // ==================== TLSA Records ====================
 
+// ListTLSARecords retrieves all TLSA records for a zone
+func (c *Client) ListTLSARecords(zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/tlsa", zone), nil)
+	if err != nil {
+		return nil, err
+	}
+	var records []DNSRecord
+	if err := json.Unmarshal(resp, &records); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return records, nil
+}
+
+// FindTLSARecordByName finds a TLSA record by name in a zone
+func (c *Client) FindTLSARecordByName(zone, name string) (*DNSRecord, error) {
+	records, err := c.ListTLSARecords(zone)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range records {
+		if r.Name == name {
+			return &r, nil
+		}
+	}
+	return nil, nil // Not found
+}
+
 func (c *Client) GetTLSARecord(zone, id string) (*DNSRecord, error) {
 	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/tlsa/%s", zone, id), nil)
 	if err != nil {
@@ -546,6 +789,33 @@ func (c *Client) DeleteTLSARecord(zone, id string) error {
 
 // ==================== SSHFP Records ====================
 
+// ListSSHFPRecords retrieves all SSHFP records for a zone
+func (c *Client) ListSSHFPRecords(zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/sshfp", zone), nil)
+	if err != nil {
+		return nil, err
+	}
+	var records []DNSRecord
+	if err := json.Unmarshal(resp, &records); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return records, nil
+}
+
+// FindSSHFPRecordByName finds an SSHFP record by name in a zone
+func (c *Client) FindSSHFPRecordByName(zone, name string) (*DNSRecord, error) {
+	records, err := c.ListSSHFPRecords(zone)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range records {
+		if r.Name == name {
+			return &r, nil
+		}
+	}
+	return nil, nil // Not found
+}
+
 func (c *Client) GetSSHFPRecord(zone, id string) (*DNSRecord, error) {
 	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/sshfp/%s", zone, id), nil)
 	if err != nil {
@@ -576,6 +846,33 @@ func (c *Client) DeleteSSHFPRecord(zone, id string) error {
 }
 
 // ==================== URL Records ====================
+
+// ListURLRecords retrieves all URL records for a zone
+func (c *Client) ListURLRecords(zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/url", zone), nil)
+	if err != nil {
+		return nil, err
+	}
+	var records []DNSRecord
+	if err := json.Unmarshal(resp, &records); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return records, nil
+}
+
+// FindURLRecordByName finds a URL record by name in a zone
+func (c *Client) FindURLRecordByName(zone, name string) (*DNSRecord, error) {
+	records, err := c.ListURLRecords(zone)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range records {
+		if r.Name == name {
+			return &r, nil
+		}
+	}
+	return nil, nil // Not found
+}
 
 func (c *Client) GetURLRecord(zone, id string) (*DNSRecord, error) {
 	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/url/%s", zone, id), nil)

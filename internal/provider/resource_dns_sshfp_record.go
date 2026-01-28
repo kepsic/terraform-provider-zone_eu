@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -27,13 +28,14 @@ type DNSSSHFPRecordResource struct {
 }
 
 type DNSSSHFPRecordResourceModel struct {
-	ID          types.String `tfsdk:"id"`
-	Zone        types.String `tfsdk:"zone"`
-	Name        types.String `tfsdk:"name"`
-	Destination types.String `tfsdk:"destination"`
-	Algorithm   types.Int64  `tfsdk:"algorithm"`
-	Type        types.Int64  `tfsdk:"fingerprint_type"`
-	RecordID    types.String `tfsdk:"record_id"`
+	ID            types.String `tfsdk:"id"`
+	Zone          types.String `tfsdk:"zone"`
+	Name          types.String `tfsdk:"name"`
+	Destination   types.String `tfsdk:"destination"`
+	Algorithm     types.Int64  `tfsdk:"algorithm"`
+	Type          types.Int64  `tfsdk:"fingerprint_type"`
+	RecordID      types.String `tfsdk:"record_id"`
+	ForceRecreate types.Bool   `tfsdk:"force_recreate"`
 }
 
 func (r *DNSSSHFPRecordResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -87,6 +89,12 @@ func (r *DNSSSHFPRecordResource) Schema(ctx context.Context, req resource.Schema
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"force_recreate": schema.BoolAttribute{
+				Description: "If true, delete existing record with same name before creating. Default: false.",
+				Optional:    true,
+				Computed:    true,
+				Default:     booldefault.StaticBool(false),
+			},
 		},
 	}
 }
@@ -113,6 +121,26 @@ func (r *DNSSSHFPRecordResource) Create(ctx context.Context, req resource.Create
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// If force_recreate is true, check for existing record and delete it
+	if data.ForceRecreate.ValueBool() {
+		existing, err := r.client.FindSSHFPRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to check for existing SSHFP record, got error: %s", err))
+			return
+		}
+		if existing != nil {
+			tflog.Info(ctx, "force_recreate: deleting existing SSHFP record", map[string]interface{}{
+				"zone":      data.Zone.ValueString(),
+				"name":      data.Name.ValueString(),
+				"record_id": existing.ID,
+			})
+			if err := r.client.DeleteSSHFPRecord(data.Zone.ValueString(), existing.ID); err != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete existing SSHFP record for force_recreate, got error: %s", err))
+				return
+			}
+		}
 	}
 
 	record := &DNSRecord{

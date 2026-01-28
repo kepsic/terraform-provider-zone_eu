@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -27,14 +28,15 @@ type DNSSRVRecordResource struct {
 }
 
 type DNSSRVRecordResourceModel struct {
-	ID          types.String `tfsdk:"id"`
-	Zone        types.String `tfsdk:"zone"`
-	Name        types.String `tfsdk:"name"`
-	Destination types.String `tfsdk:"destination"`
-	Priority    types.Int64  `tfsdk:"priority"`
-	Weight      types.Int64  `tfsdk:"weight"`
-	Port        types.Int64  `tfsdk:"port"`
-	RecordID    types.String `tfsdk:"record_id"`
+	ID            types.String `tfsdk:"id"`
+	Zone          types.String `tfsdk:"zone"`
+	Name          types.String `tfsdk:"name"`
+	Destination   types.String `tfsdk:"destination"`
+	Priority      types.Int64  `tfsdk:"priority"`
+	Weight        types.Int64  `tfsdk:"weight"`
+	Port          types.Int64  `tfsdk:"port"`
+	RecordID      types.String `tfsdk:"record_id"`
+	ForceRecreate types.Bool   `tfsdk:"force_recreate"`
 }
 
 func (r *DNSSRVRecordResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -95,6 +97,12 @@ func (r *DNSSRVRecordResource) Schema(ctx context.Context, req resource.SchemaRe
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"force_recreate": schema.BoolAttribute{
+				Description: "If true, delete existing record with same name before creating. Default: false.",
+				Optional:    true,
+				Computed:    true,
+				Default:     booldefault.StaticBool(false),
+			},
 		},
 	}
 }
@@ -121,6 +129,26 @@ func (r *DNSSRVRecordResource) Create(ctx context.Context, req resource.CreateRe
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// If force_recreate is true, check for existing record and delete it
+	if data.ForceRecreate.ValueBool() {
+		existing, err := r.client.FindSRVRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to check for existing SRV record, got error: %s", err))
+			return
+		}
+		if existing != nil {
+			tflog.Info(ctx, "force_recreate: deleting existing SRV record", map[string]interface{}{
+				"zone":      data.Zone.ValueString(),
+				"name":      data.Name.ValueString(),
+				"record_id": existing.ID,
+			})
+			if err := r.client.DeleteSRVRecord(data.Zone.ValueString(), existing.ID); err != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete existing SRV record for force_recreate, got error: %s", err))
+				return
+			}
+		}
 	}
 
 	record := &DNSRecord{
