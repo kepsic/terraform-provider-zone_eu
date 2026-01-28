@@ -282,7 +282,11 @@ func (c *Client) GetZone(zone string) (*DNSZone, error) {
 
 // ListARecords retrieves all A records for a zone
 func (c *Client) ListARecords(zone string) ([]DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/a", zone), nil)
+	return c.ListARecordsWithContext(context.Background(), zone)
+}
+
+func (c *Client) ListARecordsWithContext(ctx context.Context, zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/a", zone), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +299,11 @@ func (c *Client) ListARecords(zone string) ([]DNSRecord, error) {
 
 // FindARecordByName finds an A record by name in a zone
 func (c *Client) FindARecordByName(zone, name string) (*DNSRecord, error) {
-	records, err := c.ListARecords(zone)
+	return c.FindARecordByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindARecordByNameWithContext(ctx context.Context, zone, name string) (*DNSRecord, error) {
+	records, err := c.ListARecordsWithContext(ctx, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +323,11 @@ func (c *Client) FindARecordByName(zone, name string) (*DNSRecord, error) {
 }
 
 func (c *Client) GetARecord(zone, id string) (*DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/a/%s", zone, id), nil)
+	return c.GetARecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) GetARecordWithContext(ctx context.Context, zone, id string) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/a/%s", zone, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +335,11 @@ func (c *Client) GetARecord(zone, id string) (*DNSRecord, error) {
 }
 
 func (c *Client) CreateARecord(zone string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("POST", fmt.Sprintf("/dns/%s/a", zone), record)
+	return c.CreateARecordWithContext(context.Background(), zone, record)
+}
+
+func (c *Client) CreateARecordWithContext(ctx context.Context, zone string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "POST", fmt.Sprintf("/dns/%s/a", zone), record)
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +347,11 @@ func (c *Client) CreateARecord(zone string, record *DNSRecord) (*DNSRecord, erro
 }
 
 func (c *Client) UpdateARecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/a/%s", zone, id), record)
+	return c.UpdateARecordWithContext(context.Background(), zone, id, record)
+}
+
+func (c *Client) UpdateARecordWithContext(ctx context.Context, zone, id string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "PUT", fmt.Sprintf("/dns/%s/a/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +359,11 @@ func (c *Client) UpdateARecord(zone, id string, record *DNSRecord) (*DNSRecord, 
 }
 
 func (c *Client) DeleteARecord(zone, id string) error {
-	_, err := c.doRequest("DELETE", fmt.Sprintf("/dns/%s/a/%s", zone, id), nil)
+	return c.DeleteARecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) DeleteARecordWithContext(ctx context.Context, zone, id string) error {
+	_, err := c.doRequestWithContext(ctx, "DELETE", fmt.Sprintf("/dns/%s/a/%s", zone, id), nil)
 	return err
 }
 
@@ -347,7 +371,11 @@ func (c *Client) DeleteARecord(zone, id string) error {
 
 // ListAAAARecords retrieves all AAAA records for a zone
 func (c *Client) ListAAAARecords(zone string) ([]DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/aaaa", zone), nil)
+	return c.ListAAAARecordsWithContext(context.Background(), zone)
+}
+
+func (c *Client) ListAAAARecordsWithContext(ctx context.Context, zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/aaaa", zone), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +388,11 @@ func (c *Client) ListAAAARecords(zone string) ([]DNSRecord, error) {
 
 // FindAAAARecordByName finds an AAAA record by name in a zone
 func (c *Client) FindAAAARecordByName(zone, name string) (*DNSRecord, error) {
-	records, err := c.ListAAAARecords(zone)
+	return c.FindAAAARecordByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindAAAARecordByNameWithContext(ctx context.Context, zone, name string) (*DNSRecord, error) {
+	records, err := c.ListAAAARecordsWithContext(ctx, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +412,11 @@ func (c *Client) FindAAAARecordByName(zone, name string) (*DNSRecord, error) {
 }
 
 func (c *Client) GetAAAARecord(zone, id string) (*DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/aaaa/%s", zone, id), nil)
+	return c.GetAAAARecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) GetAAAARecordWithContext(ctx context.Context, zone, id string) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/aaaa/%s", zone, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -388,7 +424,11 @@ func (c *Client) GetAAAARecord(zone, id string) (*DNSRecord, error) {
 }
 
 func (c *Client) CreateAAAARecord(zone string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("POST", fmt.Sprintf("/dns/%s/aaaa", zone), record)
+	return c.CreateAAAARecordWithContext(context.Background(), zone, record)
+}
+
+func (c *Client) CreateAAAARecordWithContext(ctx context.Context, zone string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "POST", fmt.Sprintf("/dns/%s/aaaa", zone), record)
 	if err != nil {
 		return nil, err
 	}
@@ -396,7 +436,11 @@ func (c *Client) CreateAAAARecord(zone string, record *DNSRecord) (*DNSRecord, e
 }
 
 func (c *Client) UpdateAAAARecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/aaaa/%s", zone, id), record)
+	return c.UpdateAAAARecordWithContext(context.Background(), zone, id, record)
+}
+
+func (c *Client) UpdateAAAARecordWithContext(ctx context.Context, zone, id string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "PUT", fmt.Sprintf("/dns/%s/aaaa/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -404,7 +448,11 @@ func (c *Client) UpdateAAAARecord(zone, id string, record *DNSRecord) (*DNSRecor
 }
 
 func (c *Client) DeleteAAAARecord(zone, id string) error {
-	_, err := c.doRequest("DELETE", fmt.Sprintf("/dns/%s/aaaa/%s", zone, id), nil)
+	return c.DeleteAAAARecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) DeleteAAAARecordWithContext(ctx context.Context, zone, id string) error {
+	_, err := c.doRequestWithContext(ctx, "DELETE", fmt.Sprintf("/dns/%s/aaaa/%s", zone, id), nil)
 	return err
 }
 
@@ -412,7 +460,11 @@ func (c *Client) DeleteAAAARecord(zone, id string) error {
 
 // ListCNAMERecords retrieves all CNAME records for a zone
 func (c *Client) ListCNAMERecords(zone string) ([]DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/cname", zone), nil)
+	return c.ListCNAMERecordsWithContext(context.Background(), zone)
+}
+
+func (c *Client) ListCNAMERecordsWithContext(ctx context.Context, zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/cname", zone), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -425,7 +477,11 @@ func (c *Client) ListCNAMERecords(zone string) ([]DNSRecord, error) {
 
 // FindCNAMERecordByName finds a CNAME record by name in a zone
 func (c *Client) FindCNAMERecordByName(zone, name string) (*DNSRecord, error) {
-	records, err := c.ListCNAMERecords(zone)
+	return c.FindCNAMERecordByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindCNAMERecordByNameWithContext(ctx context.Context, zone, name string) (*DNSRecord, error) {
+	records, err := c.ListCNAMERecordsWithContext(ctx, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -445,7 +501,11 @@ func (c *Client) FindCNAMERecordByName(zone, name string) (*DNSRecord, error) {
 }
 
 func (c *Client) GetCNAMERecord(zone, id string) (*DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/cname/%s", zone, id), nil)
+	return c.GetCNAMERecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) GetCNAMERecordWithContext(ctx context.Context, zone, id string) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/cname/%s", zone, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -453,7 +513,11 @@ func (c *Client) GetCNAMERecord(zone, id string) (*DNSRecord, error) {
 }
 
 func (c *Client) CreateCNAMERecord(zone string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("POST", fmt.Sprintf("/dns/%s/cname", zone), record)
+	return c.CreateCNAMERecordWithContext(context.Background(), zone, record)
+}
+
+func (c *Client) CreateCNAMERecordWithContext(ctx context.Context, zone string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "POST", fmt.Sprintf("/dns/%s/cname", zone), record)
 	if err != nil {
 		return nil, err
 	}
@@ -461,7 +525,11 @@ func (c *Client) CreateCNAMERecord(zone string, record *DNSRecord) (*DNSRecord, 
 }
 
 func (c *Client) UpdateCNAMERecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/cname/%s", zone, id), record)
+	return c.UpdateCNAMERecordWithContext(context.Background(), zone, id, record)
+}
+
+func (c *Client) UpdateCNAMERecordWithContext(ctx context.Context, zone, id string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "PUT", fmt.Sprintf("/dns/%s/cname/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -469,7 +537,11 @@ func (c *Client) UpdateCNAMERecord(zone, id string, record *DNSRecord) (*DNSReco
 }
 
 func (c *Client) DeleteCNAMERecord(zone, id string) error {
-	_, err := c.doRequest("DELETE", fmt.Sprintf("/dns/%s/cname/%s", zone, id), nil)
+	return c.DeleteCNAMERecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) DeleteCNAMERecordWithContext(ctx context.Context, zone, id string) error {
+	_, err := c.doRequestWithContext(ctx, "DELETE", fmt.Sprintf("/dns/%s/cname/%s", zone, id), nil)
 	return err
 }
 
@@ -477,7 +549,11 @@ func (c *Client) DeleteCNAMERecord(zone, id string) error {
 
 // ListMXRecords retrieves all MX records for a zone
 func (c *Client) ListMXRecords(zone string) ([]DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/mx", zone), nil)
+	return c.ListMXRecordsWithContext(context.Background(), zone)
+}
+
+func (c *Client) ListMXRecordsWithContext(ctx context.Context, zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/mx", zone), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -490,7 +566,11 @@ func (c *Client) ListMXRecords(zone string) ([]DNSRecord, error) {
 
 // FindMXRecordByName finds an MX record by name in a zone
 func (c *Client) FindMXRecordByName(zone, name string) (*DNSRecord, error) {
-	records, err := c.ListMXRecords(zone)
+	return c.FindMXRecordByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindMXRecordByNameWithContext(ctx context.Context, zone, name string) (*DNSRecord, error) {
+	records, err := c.ListMXRecordsWithContext(ctx, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -510,7 +590,11 @@ func (c *Client) FindMXRecordByName(zone, name string) (*DNSRecord, error) {
 }
 
 func (c *Client) GetMXRecord(zone, id string) (*DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/mx/%s", zone, id), nil)
+	return c.GetMXRecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) GetMXRecordWithContext(ctx context.Context, zone, id string) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/mx/%s", zone, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -518,7 +602,11 @@ func (c *Client) GetMXRecord(zone, id string) (*DNSRecord, error) {
 }
 
 func (c *Client) CreateMXRecord(zone string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("POST", fmt.Sprintf("/dns/%s/mx", zone), record)
+	return c.CreateMXRecordWithContext(context.Background(), zone, record)
+}
+
+func (c *Client) CreateMXRecordWithContext(ctx context.Context, zone string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "POST", fmt.Sprintf("/dns/%s/mx", zone), record)
 	if err != nil {
 		return nil, err
 	}
@@ -526,7 +614,11 @@ func (c *Client) CreateMXRecord(zone string, record *DNSRecord) (*DNSRecord, err
 }
 
 func (c *Client) UpdateMXRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/mx/%s", zone, id), record)
+	return c.UpdateMXRecordWithContext(context.Background(), zone, id, record)
+}
+
+func (c *Client) UpdateMXRecordWithContext(ctx context.Context, zone, id string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "PUT", fmt.Sprintf("/dns/%s/mx/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -534,7 +626,11 @@ func (c *Client) UpdateMXRecord(zone, id string, record *DNSRecord) (*DNSRecord,
 }
 
 func (c *Client) DeleteMXRecord(zone, id string) error {
-	_, err := c.doRequest("DELETE", fmt.Sprintf("/dns/%s/mx/%s", zone, id), nil)
+	return c.DeleteMXRecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) DeleteMXRecordWithContext(ctx context.Context, zone, id string) error {
+	_, err := c.doRequestWithContext(ctx, "DELETE", fmt.Sprintf("/dns/%s/mx/%s", zone, id), nil)
 	return err
 }
 
@@ -542,7 +638,11 @@ func (c *Client) DeleteMXRecord(zone, id string) error {
 
 // ListTXTRecords retrieves all TXT records for a zone
 func (c *Client) ListTXTRecords(zone string) ([]DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/txt", zone), nil)
+	return c.ListTXTRecordsWithContext(context.Background(), zone)
+}
+
+func (c *Client) ListTXTRecordsWithContext(ctx context.Context, zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/txt", zone), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -555,7 +655,11 @@ func (c *Client) ListTXTRecords(zone string) ([]DNSRecord, error) {
 
 // FindTXTRecordByName finds a TXT record by name in a zone
 func (c *Client) FindTXTRecordByName(zone, name string) (*DNSRecord, error) {
-	records, err := c.ListTXTRecords(zone)
+	return c.FindTXTRecordByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindTXTRecordByNameWithContext(ctx context.Context, zone, name string) (*DNSRecord, error) {
+	records, err := c.ListTXTRecordsWithContext(ctx, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -575,7 +679,11 @@ func (c *Client) FindTXTRecordByName(zone, name string) (*DNSRecord, error) {
 }
 
 func (c *Client) GetTXTRecord(zone, id string) (*DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/txt/%s", zone, id), nil)
+	return c.GetTXTRecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) GetTXTRecordWithContext(ctx context.Context, zone, id string) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/txt/%s", zone, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -583,7 +691,11 @@ func (c *Client) GetTXTRecord(zone, id string) (*DNSRecord, error) {
 }
 
 func (c *Client) CreateTXTRecord(zone string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("POST", fmt.Sprintf("/dns/%s/txt", zone), record)
+	return c.CreateTXTRecordWithContext(context.Background(), zone, record)
+}
+
+func (c *Client) CreateTXTRecordWithContext(ctx context.Context, zone string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "POST", fmt.Sprintf("/dns/%s/txt", zone), record)
 	if err != nil {
 		return nil, err
 	}
@@ -591,7 +703,11 @@ func (c *Client) CreateTXTRecord(zone string, record *DNSRecord) (*DNSRecord, er
 }
 
 func (c *Client) UpdateTXTRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/txt/%s", zone, id), record)
+	return c.UpdateTXTRecordWithContext(context.Background(), zone, id, record)
+}
+
+func (c *Client) UpdateTXTRecordWithContext(ctx context.Context, zone, id string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "PUT", fmt.Sprintf("/dns/%s/txt/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -599,7 +715,11 @@ func (c *Client) UpdateTXTRecord(zone, id string, record *DNSRecord) (*DNSRecord
 }
 
 func (c *Client) DeleteTXTRecord(zone, id string) error {
-	_, err := c.doRequest("DELETE", fmt.Sprintf("/dns/%s/txt/%s", zone, id), nil)
+	return c.DeleteTXTRecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) DeleteTXTRecordWithContext(ctx context.Context, zone, id string) error {
+	_, err := c.doRequestWithContext(ctx, "DELETE", fmt.Sprintf("/dns/%s/txt/%s", zone, id), nil)
 	return err
 }
 
@@ -607,7 +727,11 @@ func (c *Client) DeleteTXTRecord(zone, id string) error {
 
 // ListNSRecords retrieves all NS records for a zone
 func (c *Client) ListNSRecords(zone string) ([]DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/ns", zone), nil)
+	return c.ListNSRecordsWithContext(context.Background(), zone)
+}
+
+func (c *Client) ListNSRecordsWithContext(ctx context.Context, zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/ns", zone), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -620,7 +744,11 @@ func (c *Client) ListNSRecords(zone string) ([]DNSRecord, error) {
 
 // FindNSRecordByName finds an NS record by name in a zone
 func (c *Client) FindNSRecordByName(zone, name string) (*DNSRecord, error) {
-	records, err := c.ListNSRecords(zone)
+	return c.FindNSRecordByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindNSRecordByNameWithContext(ctx context.Context, zone, name string) (*DNSRecord, error) {
+	records, err := c.ListNSRecordsWithContext(ctx, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -640,7 +768,11 @@ func (c *Client) FindNSRecordByName(zone, name string) (*DNSRecord, error) {
 }
 
 func (c *Client) GetNSRecord(zone, id string) (*DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/ns/%s", zone, id), nil)
+	return c.GetNSRecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) GetNSRecordWithContext(ctx context.Context, zone, id string) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/ns/%s", zone, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -648,7 +780,11 @@ func (c *Client) GetNSRecord(zone, id string) (*DNSRecord, error) {
 }
 
 func (c *Client) CreateNSRecord(zone string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("POST", fmt.Sprintf("/dns/%s/ns", zone), record)
+	return c.CreateNSRecordWithContext(context.Background(), zone, record)
+}
+
+func (c *Client) CreateNSRecordWithContext(ctx context.Context, zone string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "POST", fmt.Sprintf("/dns/%s/ns", zone), record)
 	if err != nil {
 		return nil, err
 	}
@@ -656,7 +792,11 @@ func (c *Client) CreateNSRecord(zone string, record *DNSRecord) (*DNSRecord, err
 }
 
 func (c *Client) UpdateNSRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/ns/%s", zone, id), record)
+	return c.UpdateNSRecordWithContext(context.Background(), zone, id, record)
+}
+
+func (c *Client) UpdateNSRecordWithContext(ctx context.Context, zone, id string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "PUT", fmt.Sprintf("/dns/%s/ns/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -664,7 +804,11 @@ func (c *Client) UpdateNSRecord(zone, id string, record *DNSRecord) (*DNSRecord,
 }
 
 func (c *Client) DeleteNSRecord(zone, id string) error {
-	_, err := c.doRequest("DELETE", fmt.Sprintf("/dns/%s/ns/%s", zone, id), nil)
+	return c.DeleteNSRecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) DeleteNSRecordWithContext(ctx context.Context, zone, id string) error {
+	_, err := c.doRequestWithContext(ctx, "DELETE", fmt.Sprintf("/dns/%s/ns/%s", zone, id), nil)
 	return err
 }
 
@@ -672,7 +816,11 @@ func (c *Client) DeleteNSRecord(zone, id string) error {
 
 // ListSRVRecords retrieves all SRV records for a zone
 func (c *Client) ListSRVRecords(zone string) ([]DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/srv", zone), nil)
+	return c.ListSRVRecordsWithContext(context.Background(), zone)
+}
+
+func (c *Client) ListSRVRecordsWithContext(ctx context.Context, zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/srv", zone), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -685,7 +833,11 @@ func (c *Client) ListSRVRecords(zone string) ([]DNSRecord, error) {
 
 // FindSRVRecordByName finds an SRV record by name in a zone
 func (c *Client) FindSRVRecordByName(zone, name string) (*DNSRecord, error) {
-	records, err := c.ListSRVRecords(zone)
+	return c.FindSRVRecordByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindSRVRecordByNameWithContext(ctx context.Context, zone, name string) (*DNSRecord, error) {
+	records, err := c.ListSRVRecordsWithContext(ctx, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -705,7 +857,11 @@ func (c *Client) FindSRVRecordByName(zone, name string) (*DNSRecord, error) {
 }
 
 func (c *Client) GetSRVRecord(zone, id string) (*DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/srv/%s", zone, id), nil)
+	return c.GetSRVRecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) GetSRVRecordWithContext(ctx context.Context, zone, id string) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/srv/%s", zone, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -713,7 +869,11 @@ func (c *Client) GetSRVRecord(zone, id string) (*DNSRecord, error) {
 }
 
 func (c *Client) CreateSRVRecord(zone string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("POST", fmt.Sprintf("/dns/%s/srv", zone), record)
+	return c.CreateSRVRecordWithContext(context.Background(), zone, record)
+}
+
+func (c *Client) CreateSRVRecordWithContext(ctx context.Context, zone string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "POST", fmt.Sprintf("/dns/%s/srv", zone), record)
 	if err != nil {
 		return nil, err
 	}
@@ -721,7 +881,11 @@ func (c *Client) CreateSRVRecord(zone string, record *DNSRecord) (*DNSRecord, er
 }
 
 func (c *Client) UpdateSRVRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/srv/%s", zone, id), record)
+	return c.UpdateSRVRecordWithContext(context.Background(), zone, id, record)
+}
+
+func (c *Client) UpdateSRVRecordWithContext(ctx context.Context, zone, id string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "PUT", fmt.Sprintf("/dns/%s/srv/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -729,7 +893,11 @@ func (c *Client) UpdateSRVRecord(zone, id string, record *DNSRecord) (*DNSRecord
 }
 
 func (c *Client) DeleteSRVRecord(zone, id string) error {
-	_, err := c.doRequest("DELETE", fmt.Sprintf("/dns/%s/srv/%s", zone, id), nil)
+	return c.DeleteSRVRecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) DeleteSRVRecordWithContext(ctx context.Context, zone, id string) error {
+	_, err := c.doRequestWithContext(ctx, "DELETE", fmt.Sprintf("/dns/%s/srv/%s", zone, id), nil)
 	return err
 }
 
@@ -737,7 +905,11 @@ func (c *Client) DeleteSRVRecord(zone, id string) error {
 
 // ListCAARecords retrieves all CAA records for a zone
 func (c *Client) ListCAARecords(zone string) ([]DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/caa", zone), nil)
+	return c.ListCAARecordsWithContext(context.Background(), zone)
+}
+
+func (c *Client) ListCAARecordsWithContext(ctx context.Context, zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/caa", zone), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -750,7 +922,11 @@ func (c *Client) ListCAARecords(zone string) ([]DNSRecord, error) {
 
 // FindCAARecordByName finds a CAA record by name in a zone
 func (c *Client) FindCAARecordByName(zone, name string) (*DNSRecord, error) {
-	records, err := c.ListCAARecords(zone)
+	return c.FindCAARecordByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindCAARecordByNameWithContext(ctx context.Context, zone, name string) (*DNSRecord, error) {
+	records, err := c.ListCAARecordsWithContext(ctx, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -770,7 +946,11 @@ func (c *Client) FindCAARecordByName(zone, name string) (*DNSRecord, error) {
 }
 
 func (c *Client) GetCAARecord(zone, id string) (*DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/caa/%s", zone, id), nil)
+	return c.GetCAARecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) GetCAARecordWithContext(ctx context.Context, zone, id string) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/caa/%s", zone, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -778,7 +958,11 @@ func (c *Client) GetCAARecord(zone, id string) (*DNSRecord, error) {
 }
 
 func (c *Client) CreateCAARecord(zone string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("POST", fmt.Sprintf("/dns/%s/caa", zone), record)
+	return c.CreateCAARecordWithContext(context.Background(), zone, record)
+}
+
+func (c *Client) CreateCAARecordWithContext(ctx context.Context, zone string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "POST", fmt.Sprintf("/dns/%s/caa", zone), record)
 	if err != nil {
 		return nil, err
 	}
@@ -786,7 +970,11 @@ func (c *Client) CreateCAARecord(zone string, record *DNSRecord) (*DNSRecord, er
 }
 
 func (c *Client) UpdateCAARecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/caa/%s", zone, id), record)
+	return c.UpdateCAARecordWithContext(context.Background(), zone, id, record)
+}
+
+func (c *Client) UpdateCAARecordWithContext(ctx context.Context, zone, id string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "PUT", fmt.Sprintf("/dns/%s/caa/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -794,7 +982,11 @@ func (c *Client) UpdateCAARecord(zone, id string, record *DNSRecord) (*DNSRecord
 }
 
 func (c *Client) DeleteCAARecord(zone, id string) error {
-	_, err := c.doRequest("DELETE", fmt.Sprintf("/dns/%s/caa/%s", zone, id), nil)
+	return c.DeleteCAARecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) DeleteCAARecordWithContext(ctx context.Context, zone, id string) error {
+	_, err := c.doRequestWithContext(ctx, "DELETE", fmt.Sprintf("/dns/%s/caa/%s", zone, id), nil)
 	return err
 }
 
@@ -802,7 +994,11 @@ func (c *Client) DeleteCAARecord(zone, id string) error {
 
 // ListTLSARecords retrieves all TLSA records for a zone
 func (c *Client) ListTLSARecords(zone string) ([]DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/tlsa", zone), nil)
+	return c.ListTLSARecordsWithContext(context.Background(), zone)
+}
+
+func (c *Client) ListTLSARecordsWithContext(ctx context.Context, zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/tlsa", zone), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -815,7 +1011,11 @@ func (c *Client) ListTLSARecords(zone string) ([]DNSRecord, error) {
 
 // FindTLSARecordByName finds a TLSA record by name in a zone
 func (c *Client) FindTLSARecordByName(zone, name string) (*DNSRecord, error) {
-	records, err := c.ListTLSARecords(zone)
+	return c.FindTLSARecordByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindTLSARecordByNameWithContext(ctx context.Context, zone, name string) (*DNSRecord, error) {
+	records, err := c.ListTLSARecordsWithContext(ctx, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -835,7 +1035,11 @@ func (c *Client) FindTLSARecordByName(zone, name string) (*DNSRecord, error) {
 }
 
 func (c *Client) GetTLSARecord(zone, id string) (*DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/tlsa/%s", zone, id), nil)
+	return c.GetTLSARecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) GetTLSARecordWithContext(ctx context.Context, zone, id string) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/tlsa/%s", zone, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -843,7 +1047,11 @@ func (c *Client) GetTLSARecord(zone, id string) (*DNSRecord, error) {
 }
 
 func (c *Client) CreateTLSARecord(zone string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("POST", fmt.Sprintf("/dns/%s/tlsa", zone), record)
+	return c.CreateTLSARecordWithContext(context.Background(), zone, record)
+}
+
+func (c *Client) CreateTLSARecordWithContext(ctx context.Context, zone string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "POST", fmt.Sprintf("/dns/%s/tlsa", zone), record)
 	if err != nil {
 		return nil, err
 	}
@@ -851,7 +1059,11 @@ func (c *Client) CreateTLSARecord(zone string, record *DNSRecord) (*DNSRecord, e
 }
 
 func (c *Client) UpdateTLSARecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/tlsa/%s", zone, id), record)
+	return c.UpdateTLSARecordWithContext(context.Background(), zone, id, record)
+}
+
+func (c *Client) UpdateTLSARecordWithContext(ctx context.Context, zone, id string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "PUT", fmt.Sprintf("/dns/%s/tlsa/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -859,7 +1071,11 @@ func (c *Client) UpdateTLSARecord(zone, id string, record *DNSRecord) (*DNSRecor
 }
 
 func (c *Client) DeleteTLSARecord(zone, id string) error {
-	_, err := c.doRequest("DELETE", fmt.Sprintf("/dns/%s/tlsa/%s", zone, id), nil)
+	return c.DeleteTLSARecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) DeleteTLSARecordWithContext(ctx context.Context, zone, id string) error {
+	_, err := c.doRequestWithContext(ctx, "DELETE", fmt.Sprintf("/dns/%s/tlsa/%s", zone, id), nil)
 	return err
 }
 
@@ -867,7 +1083,11 @@ func (c *Client) DeleteTLSARecord(zone, id string) error {
 
 // ListSSHFPRecords retrieves all SSHFP records for a zone
 func (c *Client) ListSSHFPRecords(zone string) ([]DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/sshfp", zone), nil)
+	return c.ListSSHFPRecordsWithContext(context.Background(), zone)
+}
+
+func (c *Client) ListSSHFPRecordsWithContext(ctx context.Context, zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/sshfp", zone), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -880,7 +1100,11 @@ func (c *Client) ListSSHFPRecords(zone string) ([]DNSRecord, error) {
 
 // FindSSHFPRecordByName finds an SSHFP record by name in a zone
 func (c *Client) FindSSHFPRecordByName(zone, name string) (*DNSRecord, error) {
-	records, err := c.ListSSHFPRecords(zone)
+	return c.FindSSHFPRecordByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindSSHFPRecordByNameWithContext(ctx context.Context, zone, name string) (*DNSRecord, error) {
+	records, err := c.ListSSHFPRecordsWithContext(ctx, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -900,7 +1124,11 @@ func (c *Client) FindSSHFPRecordByName(zone, name string) (*DNSRecord, error) {
 }
 
 func (c *Client) GetSSHFPRecord(zone, id string) (*DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/sshfp/%s", zone, id), nil)
+	return c.GetSSHFPRecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) GetSSHFPRecordWithContext(ctx context.Context, zone, id string) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/sshfp/%s", zone, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -908,7 +1136,11 @@ func (c *Client) GetSSHFPRecord(zone, id string) (*DNSRecord, error) {
 }
 
 func (c *Client) CreateSSHFPRecord(zone string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("POST", fmt.Sprintf("/dns/%s/sshfp", zone), record)
+	return c.CreateSSHFPRecordWithContext(context.Background(), zone, record)
+}
+
+func (c *Client) CreateSSHFPRecordWithContext(ctx context.Context, zone string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "POST", fmt.Sprintf("/dns/%s/sshfp", zone), record)
 	if err != nil {
 		return nil, err
 	}
@@ -916,7 +1148,11 @@ func (c *Client) CreateSSHFPRecord(zone string, record *DNSRecord) (*DNSRecord, 
 }
 
 func (c *Client) UpdateSSHFPRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/sshfp/%s", zone, id), record)
+	return c.UpdateSSHFPRecordWithContext(context.Background(), zone, id, record)
+}
+
+func (c *Client) UpdateSSHFPRecordWithContext(ctx context.Context, zone, id string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "PUT", fmt.Sprintf("/dns/%s/sshfp/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -924,7 +1160,11 @@ func (c *Client) UpdateSSHFPRecord(zone, id string, record *DNSRecord) (*DNSReco
 }
 
 func (c *Client) DeleteSSHFPRecord(zone, id string) error {
-	_, err := c.doRequest("DELETE", fmt.Sprintf("/dns/%s/sshfp/%s", zone, id), nil)
+	return c.DeleteSSHFPRecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) DeleteSSHFPRecordWithContext(ctx context.Context, zone, id string) error {
+	_, err := c.doRequestWithContext(ctx, "DELETE", fmt.Sprintf("/dns/%s/sshfp/%s", zone, id), nil)
 	return err
 }
 
@@ -932,7 +1172,11 @@ func (c *Client) DeleteSSHFPRecord(zone, id string) error {
 
 // ListURLRecords retrieves all URL records for a zone
 func (c *Client) ListURLRecords(zone string) ([]DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/url", zone), nil)
+	return c.ListURLRecordsWithContext(context.Background(), zone)
+}
+
+func (c *Client) ListURLRecordsWithContext(ctx context.Context, zone string) ([]DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/url", zone), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -945,7 +1189,11 @@ func (c *Client) ListURLRecords(zone string) ([]DNSRecord, error) {
 
 // FindURLRecordByName finds a URL record by name in a zone
 func (c *Client) FindURLRecordByName(zone, name string) (*DNSRecord, error) {
-	records, err := c.ListURLRecords(zone)
+	return c.FindURLRecordByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindURLRecordByNameWithContext(ctx context.Context, zone, name string) (*DNSRecord, error) {
+	records, err := c.ListURLRecordsWithContext(ctx, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -965,7 +1213,11 @@ func (c *Client) FindURLRecordByName(zone, name string) (*DNSRecord, error) {
 }
 
 func (c *Client) GetURLRecord(zone, id string) (*DNSRecord, error) {
-	resp, err := c.doRequest("GET", fmt.Sprintf("/dns/%s/url/%s", zone, id), nil)
+	return c.GetURLRecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) GetURLRecordWithContext(ctx context.Context, zone, id string) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "GET", fmt.Sprintf("/dns/%s/url/%s", zone, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -973,7 +1225,11 @@ func (c *Client) GetURLRecord(zone, id string) (*DNSRecord, error) {
 }
 
 func (c *Client) CreateURLRecord(zone string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("POST", fmt.Sprintf("/dns/%s/url", zone), record)
+	return c.CreateURLRecordWithContext(context.Background(), zone, record)
+}
+
+func (c *Client) CreateURLRecordWithContext(ctx context.Context, zone string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "POST", fmt.Sprintf("/dns/%s/url", zone), record)
 	if err != nil {
 		return nil, err
 	}
@@ -981,7 +1237,11 @@ func (c *Client) CreateURLRecord(zone string, record *DNSRecord) (*DNSRecord, er
 }
 
 func (c *Client) UpdateURLRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/url/%s", zone, id), record)
+	return c.UpdateURLRecordWithContext(context.Background(), zone, id, record)
+}
+
+func (c *Client) UpdateURLRecordWithContext(ctx context.Context, zone, id string, record *DNSRecord) (*DNSRecord, error) {
+	resp, err := c.doRequestWithContext(ctx, "PUT", fmt.Sprintf("/dns/%s/url/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -989,7 +1249,11 @@ func (c *Client) UpdateURLRecord(zone, id string, record *DNSRecord) (*DNSRecord
 }
 
 func (c *Client) DeleteURLRecord(zone, id string) error {
-	_, err := c.doRequest("DELETE", fmt.Sprintf("/dns/%s/url/%s", zone, id), nil)
+	return c.DeleteURLRecordWithContext(context.Background(), zone, id)
+}
+
+func (c *Client) DeleteURLRecordWithContext(ctx context.Context, zone, id string) error {
+	_, err := c.doRequestWithContext(ctx, "DELETE", fmt.Sprintf("/dns/%s/url/%s", zone, id), nil)
 	return err
 }
 

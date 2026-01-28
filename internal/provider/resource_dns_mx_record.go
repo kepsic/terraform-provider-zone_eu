@@ -118,7 +118,7 @@ func (r *DNSMXRecordResource) Create(ctx context.Context, req resource.CreateReq
 
 	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
-		existing, err := r.client.FindMXRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+		existing, err := r.client.FindMXRecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to check for existing MX record, got error: %s", err))
 			return
@@ -136,7 +136,7 @@ func (r *DNSMXRecordResource) Create(ctx context.Context, req resource.CreateReq
 				Priority:    int(data.Priority.ValueInt64()),
 			}
 
-			updated, err := r.client.UpdateMXRecord(data.Zone.ValueString(), existing.ID, record)
+			updated, err := r.client.UpdateMXRecordWithContext(ctx, data.Zone.ValueString(), existing.ID, record)
 			if err != nil {
 				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing MX record for force_recreate, got error: %s", err))
 				return
@@ -157,7 +157,7 @@ func (r *DNSMXRecordResource) Create(ctx context.Context, req resource.CreateReq
 		Priority:    int(data.Priority.ValueInt64()),
 	}
 
-	created, err := r.client.CreateMXRecord(data.Zone.ValueString(), record)
+	created, err := r.client.CreateMXRecordWithContext(ctx, data.Zone.ValueString(), record)
 	if err != nil {
 		// Handle zone_conflict by adopting existing record into state
 		if strings.Contains(err.Error(), "zone_conflict") {
@@ -165,7 +165,7 @@ func (r *DNSMXRecordResource) Create(ctx context.Context, req resource.CreateReq
 				"zone": data.Zone.ValueString(),
 				"name": data.Name.ValueString(),
 			})
-			existing, findErr := r.client.FindMXRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+			existing, findErr := r.client.FindMXRecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 			if findErr == nil && existing != nil {
 				data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), existing.ID))
 				data.RecordID = types.StringValue(existing.ID)
@@ -198,7 +198,7 @@ func (r *DNSMXRecordResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	record, err := r.client.GetMXRecord(zone, recordID)
+	record, err := r.client.GetMXRecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
 			resp.State.RemoveResource(ctx)
@@ -236,7 +236,7 @@ func (r *DNSMXRecordResource) Update(ctx context.Context, req resource.UpdateReq
 		Priority:    int(data.Priority.ValueInt64()),
 	}
 
-	_, err = r.client.UpdateMXRecord(zone, recordID, record)
+	_, err = r.client.UpdateMXRecordWithContext(ctx, zone, recordID, record)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update MX record, got error: %s", err))
 		return
@@ -259,7 +259,7 @@ func (r *DNSMXRecordResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	err = r.client.DeleteMXRecord(zone, recordID)
+	err = r.client.DeleteMXRecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		// Ignore 404 errors - resource is already deleted
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {

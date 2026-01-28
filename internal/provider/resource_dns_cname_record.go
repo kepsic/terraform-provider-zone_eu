@@ -108,7 +108,7 @@ func (r *DNSCNAMERecordResource) Create(ctx context.Context, req resource.Create
 
 	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
-		existing, err := r.client.FindCNAMERecordByName(data.Zone.ValueString(), data.Name.ValueString())
+		existing, err := r.client.FindCNAMERecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to check for existing CNAME record, got error: %s", err))
 			return
@@ -125,7 +125,7 @@ func (r *DNSCNAMERecordResource) Create(ctx context.Context, req resource.Create
 				Destination: data.Destination.ValueString(),
 			}
 
-			updated, err := r.client.UpdateCNAMERecord(data.Zone.ValueString(), existing.ID, record)
+			updated, err := r.client.UpdateCNAMERecordWithContext(ctx, data.Zone.ValueString(), existing.ID, record)
 			if err != nil {
 				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing CNAME record for force_recreate, got error: %s", err))
 				return
@@ -145,7 +145,7 @@ func (r *DNSCNAMERecordResource) Create(ctx context.Context, req resource.Create
 		Destination: data.Destination.ValueString(),
 	}
 
-	created, err := r.client.CreateCNAMERecord(data.Zone.ValueString(), record)
+	created, err := r.client.CreateCNAMERecordWithContext(ctx, data.Zone.ValueString(), record)
 	if err != nil {
 		// Handle zone_conflict by adopting existing record into state
 		if strings.Contains(err.Error(), "zone_conflict") {
@@ -153,7 +153,7 @@ func (r *DNSCNAMERecordResource) Create(ctx context.Context, req resource.Create
 				"zone": data.Zone.ValueString(),
 				"name": data.Name.ValueString(),
 			})
-			existing, findErr := r.client.FindCNAMERecordByName(data.Zone.ValueString(), data.Name.ValueString())
+			existing, findErr := r.client.FindCNAMERecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 			if findErr == nil && existing != nil {
 				data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), existing.ID))
 				data.RecordID = types.StringValue(existing.ID)
@@ -186,7 +186,7 @@ func (r *DNSCNAMERecordResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	record, err := r.client.GetCNAMERecord(zone, recordID)
+	record, err := r.client.GetCNAMERecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
 			resp.State.RemoveResource(ctx)
@@ -222,7 +222,7 @@ func (r *DNSCNAMERecordResource) Update(ctx context.Context, req resource.Update
 		Destination: data.Destination.ValueString(),
 	}
 
-	_, err = r.client.UpdateCNAMERecord(zone, recordID, record)
+	_, err = r.client.UpdateCNAMERecordWithContext(ctx, zone, recordID, record)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update CNAME record, got error: %s", err))
 		return
@@ -245,7 +245,7 @@ func (r *DNSCNAMERecordResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	err = r.client.DeleteCNAMERecord(zone, recordID)
+	err = r.client.DeleteCNAMERecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		// Ignore 404 errors - resource is already deleted
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {

@@ -108,7 +108,7 @@ func (r *DNSTXTRecordResource) Create(ctx context.Context, req resource.CreateRe
 
 	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
-		existing, err := r.client.FindTXTRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+		existing, err := r.client.FindTXTRecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to check for existing TXT record, got error: %s", err))
 			return
@@ -125,7 +125,7 @@ func (r *DNSTXTRecordResource) Create(ctx context.Context, req resource.CreateRe
 				Destination: data.Destination.ValueString(),
 			}
 
-			updated, err := r.client.UpdateTXTRecord(data.Zone.ValueString(), existing.ID, record)
+			updated, err := r.client.UpdateTXTRecordWithContext(ctx, data.Zone.ValueString(), existing.ID, record)
 			if err != nil {
 				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing TXT record for force_recreate, got error: %s", err))
 				return
@@ -145,7 +145,7 @@ func (r *DNSTXTRecordResource) Create(ctx context.Context, req resource.CreateRe
 		Destination: data.Destination.ValueString(),
 	}
 
-	created, err := r.client.CreateTXTRecord(data.Zone.ValueString(), record)
+	created, err := r.client.CreateTXTRecordWithContext(ctx, data.Zone.ValueString(), record)
 	if err != nil {
 		// Handle zone_conflict by adopting existing record into state
 		if strings.Contains(err.Error(), "zone_conflict") {
@@ -153,7 +153,7 @@ func (r *DNSTXTRecordResource) Create(ctx context.Context, req resource.CreateRe
 				"zone": data.Zone.ValueString(),
 				"name": data.Name.ValueString(),
 			})
-			existing, findErr := r.client.FindTXTRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+			existing, findErr := r.client.FindTXTRecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 			if findErr == nil && existing != nil {
 				data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), existing.ID))
 				data.RecordID = types.StringValue(existing.ID)
@@ -186,7 +186,7 @@ func (r *DNSTXTRecordResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	record, err := r.client.GetTXTRecord(zone, recordID)
+	record, err := r.client.GetTXTRecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
 			resp.State.RemoveResource(ctx)
@@ -222,7 +222,7 @@ func (r *DNSTXTRecordResource) Update(ctx context.Context, req resource.UpdateRe
 		Destination: data.Destination.ValueString(),
 	}
 
-	_, err = r.client.UpdateTXTRecord(zone, recordID, record)
+	_, err = r.client.UpdateTXTRecordWithContext(ctx, zone, recordID, record)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update TXT record, got error: %s", err))
 		return
@@ -245,7 +245,7 @@ func (r *DNSTXTRecordResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	err = r.client.DeleteTXTRecord(zone, recordID)
+	err = r.client.DeleteTXTRecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		// Ignore 404 errors - resource is already deleted
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {

@@ -134,7 +134,7 @@ func (r *DNSTLSARecordResource) Create(ctx context.Context, req resource.CreateR
 
 	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
-		existing, err := r.client.FindTLSARecordByName(data.Zone.ValueString(), data.Name.ValueString())
+		existing, err := r.client.FindTLSARecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to check for existing TLSA record, got error: %s", err))
 			return
@@ -154,7 +154,7 @@ func (r *DNSTLSARecordResource) Create(ctx context.Context, req resource.CreateR
 				MatchingType:     int(data.MatchingType.ValueInt64()),
 			}
 
-			updated, err := r.client.UpdateTLSARecord(data.Zone.ValueString(), existing.ID, record)
+			updated, err := r.client.UpdateTLSARecordWithContext(ctx, data.Zone.ValueString(), existing.ID, record)
 			if err != nil {
 				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing TLSA record for force_recreate, got error: %s", err))
 				return
@@ -177,7 +177,7 @@ func (r *DNSTLSARecordResource) Create(ctx context.Context, req resource.CreateR
 		MatchingType:     int(data.MatchingType.ValueInt64()),
 	}
 
-	created, err := r.client.CreateTLSARecord(data.Zone.ValueString(), record)
+	created, err := r.client.CreateTLSARecordWithContext(ctx, data.Zone.ValueString(), record)
 	if err != nil {
 		// Handle zone_conflict by adopting existing record into state
 		if strings.Contains(err.Error(), "zone_conflict") {
@@ -185,7 +185,7 @@ func (r *DNSTLSARecordResource) Create(ctx context.Context, req resource.CreateR
 				"zone": data.Zone.ValueString(),
 				"name": data.Name.ValueString(),
 			})
-			existing, findErr := r.client.FindTLSARecordByName(data.Zone.ValueString(), data.Name.ValueString())
+			existing, findErr := r.client.FindTLSARecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 			if findErr == nil && existing != nil {
 				data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), existing.ID))
 				data.RecordID = types.StringValue(existing.ID)
@@ -218,7 +218,7 @@ func (r *DNSTLSARecordResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	record, err := r.client.GetTLSARecord(zone, recordID)
+	record, err := r.client.GetTLSARecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
 			resp.State.RemoveResource(ctx)
@@ -260,7 +260,7 @@ func (r *DNSTLSARecordResource) Update(ctx context.Context, req resource.UpdateR
 		MatchingType:     int(data.MatchingType.ValueInt64()),
 	}
 
-	_, err = r.client.UpdateTLSARecord(zone, recordID, record)
+	_, err = r.client.UpdateTLSARecordWithContext(ctx, zone, recordID, record)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update TLSA record, got error: %s", err))
 		return
@@ -283,7 +283,7 @@ func (r *DNSTLSARecordResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	err = r.client.DeleteTLSARecord(zone, recordID)
+	err = r.client.DeleteTLSARecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		// Ignore 404 errors - resource is already deleted
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {

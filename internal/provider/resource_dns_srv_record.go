@@ -134,7 +134,7 @@ func (r *DNSSRVRecordResource) Create(ctx context.Context, req resource.CreateRe
 
 	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
-		existing, err := r.client.FindSRVRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+		existing, err := r.client.FindSRVRecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to check for existing SRV record, got error: %s", err))
 			return
@@ -154,7 +154,7 @@ func (r *DNSSRVRecordResource) Create(ctx context.Context, req resource.CreateRe
 				Port:        int(data.Port.ValueInt64()),
 			}
 
-			updated, err := r.client.UpdateSRVRecord(data.Zone.ValueString(), existing.ID, record)
+			updated, err := r.client.UpdateSRVRecordWithContext(ctx, data.Zone.ValueString(), existing.ID, record)
 			if err != nil {
 				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing SRV record for force_recreate, got error: %s", err))
 				return
@@ -177,7 +177,7 @@ func (r *DNSSRVRecordResource) Create(ctx context.Context, req resource.CreateRe
 		Port:        int(data.Port.ValueInt64()),
 	}
 
-	created, err := r.client.CreateSRVRecord(data.Zone.ValueString(), record)
+	created, err := r.client.CreateSRVRecordWithContext(ctx, data.Zone.ValueString(), record)
 	if err != nil {
 		// Handle zone_conflict by adopting existing record into state
 		if strings.Contains(err.Error(), "zone_conflict") {
@@ -185,7 +185,7 @@ func (r *DNSSRVRecordResource) Create(ctx context.Context, req resource.CreateRe
 				"zone": data.Zone.ValueString(),
 				"name": data.Name.ValueString(),
 			})
-			existing, findErr := r.client.FindSRVRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+			existing, findErr := r.client.FindSRVRecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 			if findErr == nil && existing != nil {
 				data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), existing.ID))
 				data.RecordID = types.StringValue(existing.ID)
@@ -218,7 +218,7 @@ func (r *DNSSRVRecordResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	record, err := r.client.GetSRVRecord(zone, recordID)
+	record, err := r.client.GetSRVRecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
 			resp.State.RemoveResource(ctx)
@@ -260,7 +260,7 @@ func (r *DNSSRVRecordResource) Update(ctx context.Context, req resource.UpdateRe
 		Port:        int(data.Port.ValueInt64()),
 	}
 
-	_, err = r.client.UpdateSRVRecord(zone, recordID, record)
+	_, err = r.client.UpdateSRVRecordWithContext(ctx, zone, recordID, record)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update SRV record, got error: %s", err))
 		return
@@ -283,7 +283,7 @@ func (r *DNSSRVRecordResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	err = r.client.DeleteSRVRecord(zone, recordID)
+	err = r.client.DeleteSRVRecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		// Ignore 404 errors - resource is already deleted
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {

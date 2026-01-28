@@ -126,7 +126,7 @@ func (r *DNSURLRecordResource) Create(ctx context.Context, req resource.CreateRe
 
 	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
-		existing, err := r.client.FindURLRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+		existing, err := r.client.FindURLRecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to check for existing URL record, got error: %s", err))
 			return
@@ -144,7 +144,7 @@ func (r *DNSURLRecordResource) Create(ctx context.Context, req resource.CreateRe
 				Type:        int(data.RedirectType.ValueInt64()),
 			}
 
-			updated, err := r.client.UpdateURLRecord(data.Zone.ValueString(), existing.ID, record)
+			updated, err := r.client.UpdateURLRecordWithContext(ctx, data.Zone.ValueString(), existing.ID, record)
 			if err != nil {
 				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing URL record for force_recreate, got error: %s", err))
 				return
@@ -165,7 +165,7 @@ func (r *DNSURLRecordResource) Create(ctx context.Context, req resource.CreateRe
 		Type:        int(data.RedirectType.ValueInt64()),
 	}
 
-	created, err := r.client.CreateURLRecord(data.Zone.ValueString(), record)
+	created, err := r.client.CreateURLRecordWithContext(ctx, data.Zone.ValueString(), record)
 	if err != nil {
 		// Handle zone_conflict by adopting existing record into state
 		if strings.Contains(err.Error(), "zone_conflict") {
@@ -173,7 +173,7 @@ func (r *DNSURLRecordResource) Create(ctx context.Context, req resource.CreateRe
 				"zone": data.Zone.ValueString(),
 				"name": data.Name.ValueString(),
 			})
-			existing, findErr := r.client.FindURLRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+			existing, findErr := r.client.FindURLRecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 			if findErr == nil && existing != nil {
 				data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), existing.ID))
 				data.RecordID = types.StringValue(existing.ID)
@@ -206,7 +206,7 @@ func (r *DNSURLRecordResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	record, err := r.client.GetURLRecord(zone, recordID)
+	record, err := r.client.GetURLRecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
 			resp.State.RemoveResource(ctx)
@@ -244,7 +244,7 @@ func (r *DNSURLRecordResource) Update(ctx context.Context, req resource.UpdateRe
 		Type:        int(data.RedirectType.ValueInt64()),
 	}
 
-	_, err = r.client.UpdateURLRecord(zone, recordID, record)
+	_, err = r.client.UpdateURLRecordWithContext(ctx, zone, recordID, record)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update URL record, got error: %s", err))
 		return
@@ -267,7 +267,7 @@ func (r *DNSURLRecordResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	err = r.client.DeleteURLRecord(zone, recordID)
+	err = r.client.DeleteURLRecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		// Ignore 404 errors - resource is already deleted
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {

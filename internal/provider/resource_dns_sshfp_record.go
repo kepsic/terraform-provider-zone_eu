@@ -126,7 +126,7 @@ func (r *DNSSSHFPRecordResource) Create(ctx context.Context, req resource.Create
 
 	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
-		existing, err := r.client.FindSSHFPRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+		existing, err := r.client.FindSSHFPRecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to check for existing SSHFP record, got error: %s", err))
 			return
@@ -145,7 +145,7 @@ func (r *DNSSSHFPRecordResource) Create(ctx context.Context, req resource.Create
 				Type:        int(data.Type.ValueInt64()),
 			}
 
-			updated, err := r.client.UpdateSSHFPRecord(data.Zone.ValueString(), existing.ID, record)
+			updated, err := r.client.UpdateSSHFPRecordWithContext(ctx, data.Zone.ValueString(), existing.ID, record)
 			if err != nil {
 				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing SSHFP record for force_recreate, got error: %s", err))
 				return
@@ -167,7 +167,7 @@ func (r *DNSSSHFPRecordResource) Create(ctx context.Context, req resource.Create
 		Type:        int(data.Type.ValueInt64()),
 	}
 
-	created, err := r.client.CreateSSHFPRecord(data.Zone.ValueString(), record)
+	created, err := r.client.CreateSSHFPRecordWithContext(ctx, data.Zone.ValueString(), record)
 	if err != nil {
 		// Handle zone_conflict by adopting existing record into state
 		if strings.Contains(err.Error(), "zone_conflict") {
@@ -175,7 +175,7 @@ func (r *DNSSSHFPRecordResource) Create(ctx context.Context, req resource.Create
 				"zone": data.Zone.ValueString(),
 				"name": data.Name.ValueString(),
 			})
-			existing, findErr := r.client.FindSSHFPRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+			existing, findErr := r.client.FindSSHFPRecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 			if findErr == nil && existing != nil {
 				data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), existing.ID))
 				data.RecordID = types.StringValue(existing.ID)
@@ -208,7 +208,7 @@ func (r *DNSSSHFPRecordResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	record, err := r.client.GetSSHFPRecord(zone, recordID)
+	record, err := r.client.GetSSHFPRecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
 			resp.State.RemoveResource(ctx)
@@ -248,7 +248,7 @@ func (r *DNSSSHFPRecordResource) Update(ctx context.Context, req resource.Update
 		Type:        int(data.Type.ValueInt64()),
 	}
 
-	_, err = r.client.UpdateSSHFPRecord(zone, recordID, record)
+	_, err = r.client.UpdateSSHFPRecordWithContext(ctx, zone, recordID, record)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update SSHFP record, got error: %s", err))
 		return
@@ -271,7 +271,7 @@ func (r *DNSSSHFPRecordResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	err = r.client.DeleteSSHFPRecord(zone, recordID)
+	err = r.client.DeleteSSHFPRecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		// Ignore 404 errors - resource is already deleted
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {

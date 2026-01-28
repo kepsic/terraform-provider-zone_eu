@@ -108,7 +108,7 @@ func (r *DNSNSRecordResource) Create(ctx context.Context, req resource.CreateReq
 
 	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
-		existing, err := r.client.FindNSRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+		existing, err := r.client.FindNSRecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to check for existing NS record, got error: %s", err))
 			return
@@ -125,7 +125,7 @@ func (r *DNSNSRecordResource) Create(ctx context.Context, req resource.CreateReq
 				Destination: data.Destination.ValueString(),
 			}
 
-			updated, err := r.client.UpdateNSRecord(data.Zone.ValueString(), existing.ID, record)
+			updated, err := r.client.UpdateNSRecordWithContext(ctx, data.Zone.ValueString(), existing.ID, record)
 			if err != nil {
 				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing NS record for force_recreate, got error: %s", err))
 				return
@@ -145,7 +145,7 @@ func (r *DNSNSRecordResource) Create(ctx context.Context, req resource.CreateReq
 		Destination: data.Destination.ValueString(),
 	}
 
-	created, err := r.client.CreateNSRecord(data.Zone.ValueString(), record)
+	created, err := r.client.CreateNSRecordWithContext(ctx, data.Zone.ValueString(), record)
 	if err != nil {
 		// Handle zone_conflict by adopting existing record into state
 		if strings.Contains(err.Error(), "zone_conflict") {
@@ -153,7 +153,7 @@ func (r *DNSNSRecordResource) Create(ctx context.Context, req resource.CreateReq
 				"zone": data.Zone.ValueString(),
 				"name": data.Name.ValueString(),
 			})
-			existing, findErr := r.client.FindNSRecordByName(data.Zone.ValueString(), data.Name.ValueString())
+			existing, findErr := r.client.FindNSRecordByNameWithContext(ctx, data.Zone.ValueString(), data.Name.ValueString())
 			if findErr == nil && existing != nil {
 				data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), existing.ID))
 				data.RecordID = types.StringValue(existing.ID)
@@ -186,7 +186,7 @@ func (r *DNSNSRecordResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	record, err := r.client.GetNSRecord(zone, recordID)
+	record, err := r.client.GetNSRecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
 			resp.State.RemoveResource(ctx)
@@ -222,7 +222,7 @@ func (r *DNSNSRecordResource) Update(ctx context.Context, req resource.UpdateReq
 		Destination: data.Destination.ValueString(),
 	}
 
-	_, err = r.client.UpdateNSRecord(zone, recordID, record)
+	_, err = r.client.UpdateNSRecordWithContext(ctx, zone, recordID, record)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update NS record, got error: %s", err))
 		return
@@ -245,7 +245,7 @@ func (r *DNSNSRecordResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	err = r.client.DeleteNSRecord(zone, recordID)
+	err = r.client.DeleteNSRecordWithContext(ctx, zone, recordID)
 	if err != nil {
 		// Ignore 404 errors - resource is already deleted
 		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
