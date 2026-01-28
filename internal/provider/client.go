@@ -7,10 +7,19 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"sync"
+	"time"
 )
 
 const (
 	baseURL = "https://api.zone.eu/v2"
+
+	// Rate limiting constants
+	defaultRateLimit     = 60 // requests per minute
+	rateLimitResetPeriod = time.Minute
+	maxRetries           = 3
+	retryBaseDelay       = time.Second
 )
 
 // Client represents the Zone.EU API client
@@ -18,14 +27,22 @@ type Client struct {
 	httpClient *http.Client
 	username   string
 	apiKey     string
+
+	// Rate limiting
+	mu             sync.Mutex
+	rateLimitLimit int
+	rateLimitRemaining int
+	rateLimitResetAt   time.Time
 }
 
 // NewClient creates a new Zone.EU API client
 func NewClient(username, apiKey string) *Client {
 	return &Client{
-		httpClient: &http.Client{},
-		username:   username,
-		apiKey:     apiKey,
+		httpClient:         &http.Client{Timeout: 30 * time.Second},
+		username:           username,
+		apiKey:             apiKey,
+		rateLimitLimit:     defaultRateLimit,
+		rateLimitRemaining: defaultRateLimit,
 	}
 }
 
@@ -35,8 +52,89 @@ func (c *Client) authHeader() string {
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
 }
 
-// doRequest performs an HTTP request with authentication
+// updateRateLimitInfo updates rate limit info from response headers
+func (c *Client) updateRateLimitInfo(resp *http.Response) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if limit := resp.Header.Get("X-Ratelimit-Limit"); limit != "" {
+		if val, err := strconv.Atoi(limit); err == nil {
+			c.rateLimitLimit = val
+		}
+	}
+
+	if remaining := resp.Header.Get("X-Ratelimit-Remaining"); remaining != "" {
+		if val, err := strconv.Atoi(remaining); err == nil {
+			c.rateLimitRemaining = val
+		}
+	}
+}
+
+// waitForRateLimit waits if we've hit the rate limit
+func (c *Client) waitForRateLimit() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// If we have remaining requests, no need to wait
+	if c.rateLimitRemaining > 0 {
+		return
+	}
+
+	// Calculate wait time until reset
+	now := time.Now()
+	if c.rateLimitResetAt.After(now) {
+		waitDuration := c.rateLimitResetAt.Sub(now)
+		c.mu.Unlock()
+		time.Sleep(waitDuration)
+		c.mu.Lock()
+	}
+}
+
+// doRequest performs an HTTP request with authentication and rate limiting
 func (c *Client) doRequest(method, path string, body interface{}) ([]byte, error) {
+	var lastErr error
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		// Wait if we've hit rate limit
+		c.waitForRateLimit()
+
+		result, err := c.doRequestOnce(method, path, body)
+		if err == nil {
+			return result, nil
+		}
+
+		// Check if it's a rate limit error
+		if rateLimitErr, ok := err.(*RateLimitError); ok {
+			// Set reset time and wait
+			c.mu.Lock()
+			c.rateLimitRemaining = 0
+			c.rateLimitResetAt = time.Now().Add(rateLimitErr.RetryAfter)
+			c.mu.Unlock()
+
+			lastErr = err
+			time.Sleep(rateLimitErr.RetryAfter)
+			continue
+		}
+
+		// For other errors, return immediately
+		return nil, err
+	}
+
+	return nil, fmt.Errorf("max retries exceeded: %w", lastErr)
+}
+
+// RateLimitError represents a rate limit error from the API
+type RateLimitError struct {
+	RetryAfter time.Duration
+	Message    string
+}
+
+func (e *RateLimitError) Error() string {
+	return fmt.Sprintf("rate limit exceeded, retry after %v: %s", e.RetryAfter, e.Message)
+}
+
+// doRequestOnce performs a single HTTP request
+func (c *Client) doRequestOnce(method, path string, body interface{}) ([]byte, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		jsonBody, err := json.Marshal(body)
@@ -61,13 +159,37 @@ func (c *Client) doRequest(method, path string, body interface{}) ([]byte, error
 	}
 	defer resp.Body.Close()
 
+	// Update rate limit info from headers
+	c.updateRateLimitInfo(resp)
+
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("error reading response body: %w", err)
 	}
 
+	// Handle rate limiting (429 Too Many Requests)
+	if resp.StatusCode == http.StatusTooManyRequests {
+		retryAfter := rateLimitResetPeriod // default to 1 minute
+		if retryHeader := resp.Header.Get("Retry-After"); retryHeader != "" {
+			if seconds, err := strconv.Atoi(retryHeader); err == nil {
+				retryAfter = time.Duration(seconds) * time.Second
+			}
+		}
+		statusMsg := resp.Header.Get("X-Status-Message")
+		return nil, &RateLimitError{
+			RetryAfter: retryAfter,
+			Message:    statusMsg,
+		}
+	}
+
+	// Handle other error status codes
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(respBody))
+		statusMsg := resp.Header.Get("X-Status-Message")
+		errMsg := string(respBody)
+		if statusMsg != "" {
+			errMsg = fmt.Sprintf("%s (X-Status-Message: %s)", errMsg, statusMsg)
+		}
+		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, errMsg)
 	}
 
 	return respBody, nil
