@@ -29,8 +29,8 @@ type Client struct {
 	apiKey     string
 
 	// Rate limiting
-	mu             sync.Mutex
-	rateLimitLimit int
+	mu                 sync.Mutex
+	rateLimitLimit     int
 	rateLimitRemaining int
 	rateLimitResetAt   time.Time
 }
@@ -724,4 +724,183 @@ func (c *Client) GetDNSZone(zone string) (*DNSZone, error) {
 		return nil, fmt.Errorf("error parsing response: %w", err)
 	}
 	return &dnsZone, nil
+}
+
+// ==================== Domain Management ====================
+
+// Domain represents a domain in Zone.EU
+type Domain struct {
+	ResourceURL          string `json:"resource_url,omitempty"`
+	Name                 string `json:"name"`
+	Delegated            string `json:"delegated,omitempty"`
+	Expires              string `json:"expires,omitempty"`
+	DNSSEC               bool   `json:"dnssec"`
+	Autorenew            bool   `json:"autorenew"`
+	RenewOrder           string `json:"renew_order,omitempty"`
+	RenewalNotifications bool   `json:"renewal_notifications"`
+	HasPendingTrade      *int   `json:"has_pending_trade,omitempty"`
+	HasPendingDNSSEC     bool   `json:"has_pending_dnssec,omitempty"`
+	Reactivate           bool   `json:"reactivate,omitempty"`
+	AuthKeyEnabled       bool   `json:"auth_key_enabled,omitempty"`
+	SigningRequired      bool   `json:"signing_required,omitempty"`
+	NameserversCustom    bool   `json:"nameservers_custom"`
+}
+
+// DomainUpdate represents the updateable fields for a domain
+type DomainUpdate struct {
+	Autorenew         *bool `json:"autorenew,omitempty"`
+	DNSSEC            *bool `json:"dnssec,omitempty"`
+	NameserversCustom *bool `json:"nameservers_custom,omitempty"`
+}
+
+// DomainPreferences represents domain preferences
+type DomainPreferences struct {
+	ResourceURL          string `json:"resource_url,omitempty"`
+	RenewalNotifications bool   `json:"renewal_notifications"`
+}
+
+// DomainNameserver represents a domain nameserver
+type DomainNameserver struct {
+	ResourceURL string   `json:"resource_url,omitempty"`
+	Hostname    string   `json:"hostname"`
+	IP          []string `json:"ip,omitempty"`
+}
+
+// GetDomains retrieves all domains
+func (c *Client) GetDomains() ([]Domain, error) {
+	resp, err := c.doRequest("GET", "/domain", nil)
+	if err != nil {
+		return nil, err
+	}
+	var domains []Domain
+	if err := json.Unmarshal(resp, &domains); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return domains, nil
+}
+
+// GetDomain retrieves a specific domain
+func (c *Client) GetDomain(name string) (*Domain, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/domain/%s", name), nil)
+	if err != nil {
+		return nil, err
+	}
+	// API returns array with single element
+	var domains []Domain
+	if err := json.Unmarshal(resp, &domains); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	if len(domains) == 0 {
+		return nil, fmt.Errorf("domain not found: %s", name)
+	}
+	return &domains[0], nil
+}
+
+// UpdateDomain updates a domain's settings
+func (c *Client) UpdateDomain(name string, update *DomainUpdate) (*Domain, error) {
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/domain/%s", name), update)
+	if err != nil {
+		return nil, err
+	}
+	var domains []Domain
+	if err := json.Unmarshal(resp, &domains); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	if len(domains) == 0 {
+		return nil, fmt.Errorf("domain not found: %s", name)
+	}
+	return &domains[0], nil
+}
+
+// GetDomainPreferences retrieves domain preferences
+func (c *Client) GetDomainPreferences(name string) (*DomainPreferences, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/domain/%s/preferences", name), nil)
+	if err != nil {
+		return nil, err
+	}
+	var prefs []DomainPreferences
+	if err := json.Unmarshal(resp, &prefs); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	if len(prefs) == 0 {
+		return nil, fmt.Errorf("domain preferences not found: %s", name)
+	}
+	return &prefs[0], nil
+}
+
+// UpdateDomainPreferences updates domain preferences
+func (c *Client) UpdateDomainPreferences(name string, prefs *DomainPreferences) (*DomainPreferences, error) {
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/domain/%s/preferences", name), prefs)
+	if err != nil {
+		return nil, err
+	}
+	var updated []DomainPreferences
+	if err := json.Unmarshal(resp, &updated); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	if len(updated) == 0 {
+		return nil, fmt.Errorf("domain preferences not found: %s", name)
+	}
+	return &updated[0], nil
+}
+
+// GetDomainNameservers retrieves all nameservers for a domain
+func (c *Client) GetDomainNameservers(domain string) ([]DomainNameserver, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/domain/%s/nameserver", domain), nil)
+	if err != nil {
+		return nil, err
+	}
+	var nameservers []DomainNameserver
+	if err := json.Unmarshal(resp, &nameservers); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return nameservers, nil
+}
+
+// GetDomainNameserver retrieves a specific nameserver
+func (c *Client) GetDomainNameserver(domain, hostname string) (*DomainNameserver, error) {
+	resp, err := c.doRequest("GET", fmt.Sprintf("/domain/%s/nameserver/%s", domain, hostname), nil)
+	if err != nil {
+		return nil, err
+	}
+	var nameservers []DomainNameserver
+	if err := json.Unmarshal(resp, &nameservers); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	if len(nameservers) == 0 {
+		return nil, fmt.Errorf("nameserver not found: %s", hostname)
+	}
+	return &nameservers[0], nil
+}
+
+// CreateDomainNameservers creates nameservers for a domain (replaces all)
+func (c *Client) CreateDomainNameservers(domain string, nameservers []DomainNameserver) ([]DomainNameserver, error) {
+	resp, err := c.doRequest("POST", fmt.Sprintf("/domain/%s/nameserver", domain), nameservers)
+	if err != nil {
+		return nil, err
+	}
+	var created []DomainNameserver
+	if err := json.Unmarshal(resp, &created); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return created, nil
+}
+
+// UpdateDomainNameserver updates a specific nameserver
+func (c *Client) UpdateDomainNameserver(domain, hostname string, ns *DomainNameserver) (*DomainNameserver, error) {
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/domain/%s/nameserver/%s", domain, hostname), ns)
+	if err != nil {
+		return nil, err
+	}
+	var updated DomainNameserver
+	if err := json.Unmarshal(resp, &updated); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	return &updated, nil
+}
+
+// DeleteDomainNameserver deletes a nameserver
+func (c *Client) DeleteDomainNameserver(domain, hostname string) error {
+	_, err := c.doRequest("DELETE", fmt.Sprintf("/domain/%s/nameserver/%s", domain, hostname), nil)
+	return err
 }

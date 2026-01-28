@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	envVarUsername          = "ZONE_EU_USERNAME"
-	envVarAPIKey            = "ZONE_EU_API_KEY"
-	errMissingAuthUsername  = "Required username could not be found. Please set the username using an input variable in the provider configuration block or by using the `" + envVarUsername + "` environment variable."
-	errMissingAuthAPIKey    = "Required api_key could not be found. Please set the api_key using an input variable in the provider configuration block or by using the `" + envVarAPIKey + "` environment variable."
+	envVarUsername         = "ZONE_EU_USERNAME"
+	envVarAPIKey           = "ZONE_EU_API_KEY"
+	errMissingAuthUsername = "Required username could not be found. Please set the username using an input variable in the provider configuration block or by using the `" + envVarUsername + "` environment variable."
+	errMissingAuthAPIKey   = "Required api_key could not be found. Please set the api_key using an input variable in the provider configuration block or by using the `" + envVarAPIKey + "` environment variable."
 )
 
 var _ provider.Provider = &ZoneProvider{}
@@ -96,12 +96,15 @@ func (p *ZoneProvider) Resources(ctx context.Context) []func() resource.Resource
 		NewDNSTLSARecordResource,
 		NewDNSSSHFPRecordResource,
 		NewDNSURLRecordResource,
+		NewDomainResource,
+		NewDomainNameserverResource,
 	}
 }
 
 func (p *ZoneProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewDNSZoneDataSource,
+		NewDomainDataSource,
 	}
 }
 

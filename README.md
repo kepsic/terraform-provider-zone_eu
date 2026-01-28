@@ -1,11 +1,12 @@
 # Terraform Provider for Zone.EU
 
-This is a Terraform provider for managing DNS records on [Zone.EU](https://www.zone.ee) hosting platform via their [API v2](https://api.zone.eu/v2).
+This is a Terraform provider for managing DNS records and domains on [Zone.EU](https://www.zone.ee) hosting platform via their [API v2](https://api.zone.eu/v2).
 
 ## Features
 
-### Implemented (DNS Management)
+### Implemented
 
+#### DNS Management
 - **DNS A Record** - IPv4 address records
 - **DNS AAAA Record** - IPv6 address records
 - **DNS CNAME Record** - Canonical name (alias) records
@@ -18,15 +19,21 @@ This is a Terraform provider for managing DNS records on [Zone.EU](https://www.z
 - **DNS SSHFP Record** - SSH fingerprint records
 - **DNS URL Record** - URL redirect records (Zone.EU specific)
 
+#### Domain Management
+- **Domain** - Manage domain settings (autorenew, DNSSEC, renewal notifications, custom nameservers)
+- **Domain Nameserver** - Manage custom nameservers for domains
+
 ### Data Sources
 
 - **DNS Zone** - Read DNS zone information
+- **Domain** - Read domain information
 
 ### Not Yet Implemented
 
 The Zone.EU API supports many other services that are not yet implemented in this provider:
 
-- **Domain Management** - Domain registration, renewal, nameserver management
+- **Domain Registration/Transfer** - Domain registration is not available via API
+- **Domain Contacts** - Contact management for domains
 - **Webhosting (vserver)** - Virtual server management
 - **E-mail** - Email account management
 - **MySQL** - Database management
@@ -228,12 +235,81 @@ output "zone_active" {
 }
 ```
 
+### Domain Resource
+
+Manage settings for an existing domain:
+
+```hcl
+resource "zone_domain" "example" {
+  name                   = "example.com"
+  autorenew              = true
+  dnssec                 = true
+  renewal_notifications  = true
+  nameservers_custom     = false
+}
+```
+
+### Data Source: Domain
+
+```hcl
+data "zone_domain" "example" {
+  name = "example.com"
+}
+
+output "domain_expires" {
+  value = data.zone_domain.example.expires
+}
+```
+
+### Custom Nameservers
+
+To use custom nameservers, first enable them on the domain, then add the nameserver records:
+
+```hcl
+resource "zone_domain" "example" {
+  name               = "example.com"
+  nameservers_custom = true
+}
+
+resource "zone_domain_nameserver" "ns1" {
+  domain   = zone_domain.example.name
+  hostname = "ns1.example.com"
+  ip       = ["192.168.1.1"]  # Glue record - required when NS is under same domain
+}
+
+resource "zone_domain_nameserver" "ns2" {
+  domain   = zone_domain.example.name
+  hostname = "ns2.example.com"
+  ip       = ["192.168.1.2"]
+}
+
+# External nameserver (no glue record needed)
+resource "zone_domain_nameserver" "external" {
+  domain   = zone_domain.example.name
+  hostname = "ns1.externaldns.com"
+}
+```
+
 ## Importing Existing Resources
 
-All resources support importing using the format `zone/record_id`:
+All resources support importing:
 
+### DNS Records
 ```bash
+# Format: zone/record_id
 terraform import zone_dns_a_record.www example.com/123
+```
+
+### Domain
+```bash
+# Format: domain_name
+terraform import zone_domain.example example.com
+```
+
+### Domain Nameserver
+```bash
+# Format: domain/hostname
+terraform import zone_domain_nameserver.ns1 example.com/ns1.example.com
 ```
 
 ## API Rate Limits
