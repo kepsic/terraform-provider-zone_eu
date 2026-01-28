@@ -253,11 +253,9 @@ type DNSRecord struct {
 	CertificateUsage int `json:"certificate_usage,omitempty"`
 	Selector         int `json:"selector,omitempty"`
 	MatchingType     int `json:"matching_type,omitempty"`
-	// For SSHFP records
+	// For SSHFP records (algorithm, type) and URL records (type=redirect code)
 	Algorithm int `json:"algorithm,omitempty"`
 	Type      int `json:"type,omitempty"`
-	// For URL records
-	RedirectType int `json:"redirect_type,omitempty"`
 }
 
 // DNSZone represents a DNS zone
@@ -333,7 +331,7 @@ func (c *Client) CreateARecord(zone string, record *DNSRecord) (*DNSRecord, erro
 }
 
 func (c *Client) UpdateARecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PATCH", fmt.Sprintf("/dns/%s/a/%s", zone, id), record)
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/a/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -398,7 +396,7 @@ func (c *Client) CreateAAAARecord(zone string, record *DNSRecord) (*DNSRecord, e
 }
 
 func (c *Client) UpdateAAAARecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PATCH", fmt.Sprintf("/dns/%s/aaaa/%s", zone, id), record)
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/aaaa/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -463,7 +461,7 @@ func (c *Client) CreateCNAMERecord(zone string, record *DNSRecord) (*DNSRecord, 
 }
 
 func (c *Client) UpdateCNAMERecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PATCH", fmt.Sprintf("/dns/%s/cname/%s", zone, id), record)
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/cname/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -528,7 +526,7 @@ func (c *Client) CreateMXRecord(zone string, record *DNSRecord) (*DNSRecord, err
 }
 
 func (c *Client) UpdateMXRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PATCH", fmt.Sprintf("/dns/%s/mx/%s", zone, id), record)
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/mx/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -593,7 +591,7 @@ func (c *Client) CreateTXTRecord(zone string, record *DNSRecord) (*DNSRecord, er
 }
 
 func (c *Client) UpdateTXTRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PATCH", fmt.Sprintf("/dns/%s/txt/%s", zone, id), record)
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/txt/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -658,7 +656,7 @@ func (c *Client) CreateNSRecord(zone string, record *DNSRecord) (*DNSRecord, err
 }
 
 func (c *Client) UpdateNSRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PATCH", fmt.Sprintf("/dns/%s/ns/%s", zone, id), record)
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/ns/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -723,7 +721,7 @@ func (c *Client) CreateSRVRecord(zone string, record *DNSRecord) (*DNSRecord, er
 }
 
 func (c *Client) UpdateSRVRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PATCH", fmt.Sprintf("/dns/%s/srv/%s", zone, id), record)
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/srv/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -788,7 +786,7 @@ func (c *Client) CreateCAARecord(zone string, record *DNSRecord) (*DNSRecord, er
 }
 
 func (c *Client) UpdateCAARecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PATCH", fmt.Sprintf("/dns/%s/caa/%s", zone, id), record)
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/caa/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -853,7 +851,7 @@ func (c *Client) CreateTLSARecord(zone string, record *DNSRecord) (*DNSRecord, e
 }
 
 func (c *Client) UpdateTLSARecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PATCH", fmt.Sprintf("/dns/%s/tlsa/%s", zone, id), record)
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/tlsa/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -918,7 +916,7 @@ func (c *Client) CreateSSHFPRecord(zone string, record *DNSRecord) (*DNSRecord, 
 }
 
 func (c *Client) UpdateSSHFPRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PATCH", fmt.Sprintf("/dns/%s/sshfp/%s", zone, id), record)
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/sshfp/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}
@@ -983,7 +981,7 @@ func (c *Client) CreateURLRecord(zone string, record *DNSRecord) (*DNSRecord, er
 }
 
 func (c *Client) UpdateURLRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
-	resp, err := c.doRequest("PATCH", fmt.Sprintf("/dns/%s/url/%s", zone, id), record)
+	resp, err := c.doRequest("PUT", fmt.Sprintf("/dns/%s/url/%s", zone, id), record)
 	if err != nil {
 		return nil, err
 	}

@@ -139,9 +139,9 @@ func (r *DNSURLRecordResource) Create(ctx context.Context, req resource.CreateRe
 			})
 
 			record := &DNSRecord{
-				Name:         data.Name.ValueString(),
-				Destination:  data.Destination.ValueString(),
-				RedirectType: int(data.RedirectType.ValueInt64()),
+				Name:        data.Name.ValueString(),
+				Destination: data.Destination.ValueString(),
+				Type:        int(data.RedirectType.ValueInt64()),
 			}
 
 			updated, err := r.client.UpdateURLRecord(data.Zone.ValueString(), existing.ID, record)
@@ -160,9 +160,9 @@ func (r *DNSURLRecordResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	record := &DNSRecord{
-		Name:         data.Name.ValueString(),
-		Destination:  data.Destination.ValueString(),
-		RedirectType: int(data.RedirectType.ValueInt64()),
+		Name:        data.Name.ValueString(),
+		Destination: data.Destination.ValueString(),
+		Type:        int(data.RedirectType.ValueInt64()),
 	}
 
 	created, err := r.client.CreateURLRecord(data.Zone.ValueString(), record)
@@ -219,7 +219,7 @@ func (r *DNSURLRecordResource) Read(ctx context.Context, req resource.ReadReques
 	data.Zone = types.StringValue(zone)
 	data.Name = types.StringValue(record.Name)
 	data.Destination = types.StringValue(record.Destination)
-	data.RedirectType = types.Int64Value(int64(record.RedirectType))
+	data.RedirectType = types.Int64Value(int64(record.Type))
 	data.RecordID = types.StringValue(record.ID)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -239,9 +239,9 @@ func (r *DNSURLRecordResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	record := &DNSRecord{
-		Name:         data.Name.ValueString(),
-		Destination:  data.Destination.ValueString(),
-		RedirectType: int(data.RedirectType.ValueInt64()),
+		Name:        data.Name.ValueString(),
+		Destination: data.Destination.ValueString(),
+		Type:        int(data.RedirectType.ValueInt64()),
 	}
 
 	_, err = r.client.UpdateURLRecord(zone, recordID, record)
