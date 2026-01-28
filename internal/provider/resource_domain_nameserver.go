@@ -39,7 +39,7 @@ func (r *DomainNameserverResource) Metadata(ctx context.Context, req resource.Me
 
 func (r *DomainNameserverResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a custom nameserver for a domain in Zone.EU. Before using custom nameservers, ensure the domain's nameservers_custom is set to true via the zone_domain resource.",
+		Description: "Manages a custom nameserver for a domain in Zone.EU. Before using custom nameservers, ensure the domain's nameservers_custom is set to true via the zoneeu_domain resource.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The identifier for this resource in format 'domain/hostname'.",
