@@ -19,13 +19,13 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "set to true to run the provider with support for debuggers like delve")
 	flag.Parse()
 
-	opts := providerserver.ServeOpts{
-		Address: "registry.terraform.io/kepsic/zoneeu",
-		Debug:   debug,
-	}
-
-	err := providerserver.Serve(context.Background(), provider.New(version), opts)
+	err := providerserver.Serve(context.Background(), provider.New(version), providerserver.ServeOpts{
+		Address:         "registry.terraform.io/kepsic/zoneeu",
+		Debug:           debug,
+		ProtocolVersion: 5,
+	})
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 }
+
