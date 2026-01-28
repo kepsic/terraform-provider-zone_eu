@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -72,22 +73,22 @@ func (r *DNSSRVRecordResource) Schema(ctx context.Context, req resource.SchemaRe
 			"priority": schema.Int64Attribute{
 				Description: "The priority of the target host (lower values have higher priority).",
 				Required:    true,
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
+				Validators: []validator.Int64{
+					int64validator.Between(0, 65535),
 				},
 			},
 			"weight": schema.Int64Attribute{
 				Description: "A relative weight for records with the same priority.",
 				Required:    true,
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
+				Validators: []validator.Int64{
+					int64validator.Between(0, 65535),
 				},
 			},
 			"port": schema.Int64Attribute{
 				Description: "The TCP or UDP port on which the service is found.",
 				Required:    true,
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
+				Validators: []validator.Int64{
+					int64validator.Between(0, 65535),
 				},
 			},
 			"record_id": schema.StringAttribute{
@@ -131,7 +132,7 @@ func (r *DNSSRVRecordResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	// If force_recreate is true, check for existing record and delete it
+	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
 		existing, err := r.client.FindSRVRecordByName(data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
@@ -139,15 +140,32 @@ func (r *DNSSRVRecordResource) Create(ctx context.Context, req resource.CreateRe
 			return
 		}
 		if existing != nil {
-			tflog.Info(ctx, "force_recreate: deleting existing SRV record", map[string]interface{}{
+			tflog.Info(ctx, "force_recreate: updating existing SRV record instead of creating new", map[string]interface{}{
 				"zone":      data.Zone.ValueString(),
 				"name":      data.Name.ValueString(),
 				"record_id": existing.ID,
 			})
-			if err := r.client.DeleteSRVRecord(data.Zone.ValueString(), existing.ID); err != nil {
-				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete existing SRV record for force_recreate, got error: %s", err))
+
+			record := &DNSRecord{
+				Name:        data.Name.ValueString(),
+				Destination: data.Destination.ValueString(),
+				Priority:    int(data.Priority.ValueInt64()),
+				Weight:      int(data.Weight.ValueInt64()),
+				Port:        int(data.Port.ValueInt64()),
+			}
+
+			updated, err := r.client.UpdateSRVRecord(data.Zone.ValueString(), existing.ID, record)
+			if err != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing SRV record for force_recreate, got error: %s", err))
 				return
 			}
+
+			data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), updated.ID))
+			data.RecordID = types.StringValue(updated.ID)
+
+			tflog.Trace(ctx, "updated existing SRV record via force_recreate")
+			resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+			return
 		}
 	}
 
@@ -252,6 +270,10 @@ func (r *DNSSRVRecordResource) Delete(ctx context.Context, req resource.DeleteRe
 
 	err = r.client.DeleteSRVRecord(zone, recordID)
 	if err != nil {
+		// Ignore 404 errors - resource is already deleted
+		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
+			return
+		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete SRV record, got error: %s", err))
 		return
 	}

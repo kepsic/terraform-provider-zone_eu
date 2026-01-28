@@ -27,6 +27,10 @@ resource "zone_dns_ns_record" "subdomain" {
 - `name` (String) The hostname for the NS record (FQDN, e.g., subdomain.example.com).
 - `destination` (String) The nameserver hostname.
 
+### Optional
+
+- `force_recreate` (Boolean) If true, updates an existing record with the same name instead of creating a new one. Default: `false`.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource in format `zone/record_id`.

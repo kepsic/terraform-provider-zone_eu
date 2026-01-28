@@ -27,7 +27,11 @@ resource "zone_dns_mx_record" "mail" {
 - `zone` (String) The DNS zone name (domain name, e.g., example.com).
 - `name` (String) The hostname for the MX record (FQDN, e.g., example.com).
 - `destination` (String) The mail server hostname.
-- `priority` (Number) The priority of the mail server (lower values have higher priority).
+- `priority` (Number) The priority of the mail server (lower values have higher priority). Must be between 0 and 65535.
+
+### Optional
+
+- `force_recreate` (Boolean) If true, updates an existing record with the same name instead of creating a new one. Default: `false`.
 
 ### Read-Only
 

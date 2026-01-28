@@ -16,6 +16,7 @@ type DomainDataSource struct {
 }
 
 type DomainDataSourceModel struct {
+	ID                   types.String `tfsdk:"id"`
 	Name                 types.String `tfsdk:"name"`
 	Expires              types.String `tfsdk:"expires"`
 	DNSSEC               types.Bool   `tfsdk:"dnssec"`
@@ -41,6 +42,10 @@ func (d *DomainDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 	resp.Schema = schema.Schema{
 		Description: "Fetches information about a domain registered with Zone.EU.",
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Description: "The ID of the data source (same as name).",
+				Computed:    true,
+			},
 			"name": schema.StringAttribute{
 				Description: "The domain name.",
 				Required:    true,
@@ -133,6 +138,7 @@ func (d *DomainDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
+	data.ID = data.Name
 	data.Name = types.StringValue(domain.Name)
 	data.Expires = types.StringValue(domain.Expires)
 	data.DNSSEC = types.BoolValue(domain.DNSSEC)

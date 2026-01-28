@@ -25,7 +25,11 @@ resource "zone_dns_a_record" "www" {
 
 - `zone` (String) The DNS zone name (domain name, e.g., example.com).
 - `name` (String) The hostname for the A record (FQDN, e.g., www.example.com).
-- `destination` (String) The IPv4 address the record points to.
+- `destination` (String) The IPv4 address the record points to. Must be a valid IPv4 address.
+
+### Optional
+
+- `force_recreate` (Boolean) If true, updates an existing record with the same name instead of creating a new one. Default: `false`.
 
 ### Read-Only
 

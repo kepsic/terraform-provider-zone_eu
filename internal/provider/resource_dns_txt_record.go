@@ -106,7 +106,7 @@ func (r *DNSTXTRecordResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	// If force_recreate is true, check for existing record and delete it
+	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
 		existing, err := r.client.FindTXTRecordByName(data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
@@ -114,15 +114,29 @@ func (r *DNSTXTRecordResource) Create(ctx context.Context, req resource.CreateRe
 			return
 		}
 		if existing != nil {
-			tflog.Info(ctx, "force_recreate: deleting existing TXT record", map[string]interface{}{
+			tflog.Info(ctx, "force_recreate: updating existing TXT record instead of creating new", map[string]interface{}{
 				"zone":      data.Zone.ValueString(),
 				"name":      data.Name.ValueString(),
 				"record_id": existing.ID,
 			})
-			if err := r.client.DeleteTXTRecord(data.Zone.ValueString(), existing.ID); err != nil {
-				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete existing TXT record for force_recreate, got error: %s", err))
+
+			record := &DNSRecord{
+				Name:        data.Name.ValueString(),
+				Destination: data.Destination.ValueString(),
+			}
+
+			updated, err := r.client.UpdateTXTRecord(data.Zone.ValueString(), existing.ID, record)
+			if err != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing TXT record for force_recreate, got error: %s", err))
 				return
 			}
+
+			data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), updated.ID))
+			data.RecordID = types.StringValue(updated.ID)
+
+			tflog.Trace(ctx, "updated existing TXT record via force_recreate")
+			resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+			return
 		}
 	}
 
@@ -218,6 +232,10 @@ func (r *DNSTXTRecordResource) Delete(ctx context.Context, req resource.DeleteRe
 
 	err = r.client.DeleteTXTRecord(zone, recordID)
 	if err != nil {
+		// Ignore 404 errors - resource is already deleted
+		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
+			return
+		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete TXT record, got error: %s", err))
 		return
 	}

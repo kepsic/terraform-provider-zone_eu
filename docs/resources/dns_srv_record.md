@@ -29,9 +29,13 @@ resource "zone_dns_srv_record" "sip" {
 - `zone` (String) The DNS zone name (domain name, e.g., example.com).
 - `name` (String) The service name (e.g., _sip._tcp.example.com).
 - `destination` (String) The target server hostname.
-- `priority` (Number) The priority of the target host (lower values have higher priority).
-- `weight` (Number) A relative weight for records with the same priority.
-- `port` (Number) The TCP or UDP port on which the service is found.
+- `priority` (Number) The priority of the target host (lower values have higher priority). Must be between 0 and 65535.
+- `weight` (Number) A relative weight for records with the same priority. Must be between 0 and 65535.
+- `port` (Number) The TCP or UDP port on which the service is found. Must be between 0 and 65535.
+
+### Optional
+
+- `force_recreate` (Boolean) If true, updates an existing record with the same name instead of creating a new one. Default: `false`.
 
 ### Read-Only
 

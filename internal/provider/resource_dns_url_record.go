@@ -3,15 +3,18 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -66,12 +69,18 @@ func (r *DNSURLRecordResource) Schema(ctx context.Context, req resource.SchemaRe
 			"destination": schema.StringAttribute{
 				Description: "The URL to redirect to.",
 				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`^https?://`),
+						"must be a valid URL starting with http:// or https://",
+					),
+				},
 			},
 			"redirect_type": schema.Int64Attribute{
 				Description: "The HTTP redirect status code: 301 (permanent) or 302 (temporary).",
 				Required:    true,
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
+				Validators: []validator.Int64{
+					int64validator.OneOf(301, 302),
 				},
 			},
 			"record_id": schema.StringAttribute{
@@ -115,7 +124,7 @@ func (r *DNSURLRecordResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	// If force_recreate is true, check for existing record and delete it
+	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
 		existing, err := r.client.FindURLRecordByName(data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
@@ -123,15 +132,30 @@ func (r *DNSURLRecordResource) Create(ctx context.Context, req resource.CreateRe
 			return
 		}
 		if existing != nil {
-			tflog.Info(ctx, "force_recreate: deleting existing URL record", map[string]interface{}{
+			tflog.Info(ctx, "force_recreate: updating existing URL record instead of creating new", map[string]interface{}{
 				"zone":      data.Zone.ValueString(),
 				"name":      data.Name.ValueString(),
 				"record_id": existing.ID,
 			})
-			if err := r.client.DeleteURLRecord(data.Zone.ValueString(), existing.ID); err != nil {
-				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete existing URL record for force_recreate, got error: %s", err))
+
+			record := &DNSRecord{
+				Name:         data.Name.ValueString(),
+				Destination:  data.Destination.ValueString(),
+				RedirectType: int(data.RedirectType.ValueInt64()),
+			}
+
+			updated, err := r.client.UpdateURLRecord(data.Zone.ValueString(), existing.ID, record)
+			if err != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing URL record for force_recreate, got error: %s", err))
 				return
 			}
+
+			data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), updated.ID))
+			data.RecordID = types.StringValue(updated.ID)
+
+			tflog.Trace(ctx, "updated existing URL record via force_recreate")
+			resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+			return
 		}
 	}
 
@@ -230,6 +254,10 @@ func (r *DNSURLRecordResource) Delete(ctx context.Context, req resource.DeleteRe
 
 	err = r.client.DeleteURLRecord(zone, recordID)
 	if err != nil {
+		// Ignore 404 errors - resource is already deleted
+		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
+			return
+		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete URL record, got error: %s", err))
 		return
 	}

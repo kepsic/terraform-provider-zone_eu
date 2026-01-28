@@ -26,10 +26,14 @@ resource "zone_dns_url_record" "redirect" {
 
 - `zone` (String) The DNS zone name (domain name, e.g., example.com).
 - `name` (String) The hostname to redirect from (FQDN, e.g., old.example.com).
-- `destination` (String) The URL to redirect to.
-- `redirect_type` (Number) The HTTP redirect status code:
+- `destination` (String) The URL to redirect to. Must be a valid URL starting with `http://` or `https://`.
+- `redirect_type` (Number) The HTTP redirect status code. Must be 301 or 302:
   - 301: Permanent redirect
   - 302: Temporary redirect
+
+### Optional
+
+- `force_recreate` (Boolean) If true, updates an existing record with the same name instead of creating a new one. Default: `false`.
 
 ### Read-Only
 

@@ -29,18 +29,22 @@ resource "zone_dns_tlsa_record" "https" {
 - `zone` (String) The DNS zone name (domain name, e.g., example.com).
 - `name` (String) The service name (e.g., _443._tcp.example.com for HTTPS).
 - `destination` (String) The certificate association data (hash or full certificate).
-- `certificate_usage` (Number) TLSA certificate usage field (0-3):
+- `certificate_usage` (Number) TLSA certificate usage field. Must be between 0 and 3:
   - 0: CA constraint
   - 1: Service certificate constraint
   - 2: Trust anchor assertion
   - 3: Domain-issued certificate
-- `selector` (Number) TLSA selector field (0-1):
+- `selector` (Number) TLSA selector field. Must be 0 or 1:
   - 0: Full certificate
   - 1: SubjectPublicKeyInfo
-- `matching_type` (Number) TLSA matching type field (0-2):
+- `matching_type` (Number) TLSA matching type field. Must be between 0 and 2:
   - 0: Exact match
   - 1: SHA-256 hash
   - 2: SHA-512 hash
+
+### Optional
+
+- `force_recreate` (Boolean) If true, updates an existing record with the same name instead of creating a new one. Default: `false`.
 
 ### Read-Only
 

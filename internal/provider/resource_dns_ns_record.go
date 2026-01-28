@@ -106,7 +106,7 @@ func (r *DNSNSRecordResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	// If force_recreate is true, check for existing record and delete it
+	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
 		existing, err := r.client.FindNSRecordByName(data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
@@ -114,15 +114,29 @@ func (r *DNSNSRecordResource) Create(ctx context.Context, req resource.CreateReq
 			return
 		}
 		if existing != nil {
-			tflog.Info(ctx, "force_recreate: deleting existing NS record", map[string]interface{}{
+			tflog.Info(ctx, "force_recreate: updating existing NS record instead of creating new", map[string]interface{}{
 				"zone":      data.Zone.ValueString(),
 				"name":      data.Name.ValueString(),
 				"record_id": existing.ID,
 			})
-			if err := r.client.DeleteNSRecord(data.Zone.ValueString(), existing.ID); err != nil {
-				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete existing NS record for force_recreate, got error: %s", err))
+
+			record := &DNSRecord{
+				Name:        data.Name.ValueString(),
+				Destination: data.Destination.ValueString(),
+			}
+
+			updated, err := r.client.UpdateNSRecord(data.Zone.ValueString(), existing.ID, record)
+			if err != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing NS record for force_recreate, got error: %s", err))
 				return
 			}
+
+			data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), updated.ID))
+			data.RecordID = types.StringValue(updated.ID)
+
+			tflog.Trace(ctx, "updated existing NS record via force_recreate")
+			resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+			return
 		}
 	}
 
@@ -218,6 +232,10 @@ func (r *DNSNSRecordResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	err = r.client.DeleteNSRecord(zone, recordID)
 	if err != nil {
+		// Ignore 404 errors - resource is already deleted
+		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
+			return
+		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete NS record, got error: %s", err))
 		return
 	}

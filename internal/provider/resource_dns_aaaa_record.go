@@ -3,14 +3,17 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -64,6 +67,10 @@ func (r *DNSAAAARecordResource) Schema(ctx context.Context, req resource.SchemaR
 			"destination": schema.StringAttribute{
 				Description: "The IPv6 address the record points to.",
 				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(2),
+					ipv6Validator{},
+				},
 			},
 			"record_id": schema.StringAttribute{
 				Description: "The ID of the record in Zone.EU.",
@@ -106,7 +113,7 @@ func (r *DNSAAAARecordResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	// If force_recreate is true, check for existing record and delete it
+	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
 		existing, err := r.client.FindAAAARecordByName(data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
@@ -114,15 +121,29 @@ func (r *DNSAAAARecordResource) Create(ctx context.Context, req resource.CreateR
 			return
 		}
 		if existing != nil {
-			tflog.Info(ctx, "force_recreate: deleting existing AAAA record", map[string]interface{}{
+			tflog.Info(ctx, "force_recreate: updating existing AAAA record instead of creating new", map[string]interface{}{
 				"zone":      data.Zone.ValueString(),
 				"name":      data.Name.ValueString(),
 				"record_id": existing.ID,
 			})
-			if err := r.client.DeleteAAAARecord(data.Zone.ValueString(), existing.ID); err != nil {
-				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete existing AAAA record for force_recreate, got error: %s", err))
+
+			record := &DNSRecord{
+				Name:        data.Name.ValueString(),
+				Destination: data.Destination.ValueString(),
+			}
+
+			updated, err := r.client.UpdateAAAARecord(data.Zone.ValueString(), existing.ID, record)
+			if err != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing AAAA record for force_recreate, got error: %s", err))
 				return
 			}
+
+			data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), updated.ID))
+			data.RecordID = types.StringValue(updated.ID)
+
+			tflog.Trace(ctx, "updated existing AAAA record via force_recreate")
+			resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+			return
 		}
 	}
 
@@ -218,6 +239,10 @@ func (r *DNSAAAARecordResource) Delete(ctx context.Context, req resource.DeleteR
 
 	err = r.client.DeleteAAAARecord(zone, recordID)
 	if err != nil {
+		// Ignore 404 errors - resource is already deleted
+		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
+			return
+		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete AAAA record, got error: %s", err))
 		return
 	}
@@ -238,4 +263,31 @@ func (r *DNSAAAARecordResource) ImportState(ctx context.Context, req resource.Im
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("zone"), parts[0])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("record_id"), parts[1])...)
+}
+
+// ipv6Validator validates that a string is a valid IPv6 address
+type ipv6Validator struct{}
+
+func (v ipv6Validator) Description(ctx context.Context) string {
+	return "value must be a valid IPv6 address"
+}
+
+func (v ipv6Validator) MarkdownDescription(ctx context.Context) string {
+	return "value must be a valid IPv6 address"
+}
+
+func (v ipv6Validator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	value := req.ConfigValue.ValueString()
+	ip := net.ParseIP(value)
+	if ip == nil || ip.To4() != nil {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid IPv6 Address",
+			fmt.Sprintf("The value %q is not a valid IPv6 address.", value),
+		)
+	}
 }

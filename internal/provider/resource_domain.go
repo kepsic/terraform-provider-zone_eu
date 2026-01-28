@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -79,10 +80,16 @@ func (r *DomainResource) Schema(ctx context.Context, req resource.SchemaRequest,
 			"expires": schema.StringAttribute{
 				Description: "When the domain expires.",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"delegated": schema.StringAttribute{
 				Description: "Username of the domain owner if the domain is delegated to you.",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"has_pending_dnssec": schema.BoolAttribute{
 				Description: "Whether the domain has a pending DNSSEC change.",
@@ -187,6 +194,11 @@ func (r *DomainResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	domain, err := r.client.GetDomain(data.Name.ValueString())
 	if err != nil {
+		// Handle 404 - domain no longer exists or is not accessible
+		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error Reading Domain",
 			fmt.Sprintf("Could not read domain %s: %s", data.Name.ValueString(), err),

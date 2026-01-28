@@ -28,14 +28,18 @@ resource "zone_dns_sshfp_record" "server" {
 - `zone` (String) The DNS zone name (domain name, e.g., example.com).
 - `name` (String) The hostname for the SSHFP record (FQDN, e.g., server.example.com).
 - `destination` (String) The fingerprint in hexadecimal.
-- `algorithm` (Number) The SSH key algorithm:
+- `algorithm` (Number) The SSH key algorithm. Must be between 1 and 4:
   - 1: RSA
   - 2: DSA
   - 3: ECDSA
   - 4: Ed25519
-- `type` (Number) The fingerprint type:
+- `fingerprint_type` (Number) The fingerprint type. Must be 1 or 2:
   - 1: SHA-1
   - 2: SHA-256
+
+### Optional
+
+- `force_recreate` (Boolean) If true, updates an existing record with the same name instead of creating a new one. Default: `false`.
 
 ### Read-Only
 

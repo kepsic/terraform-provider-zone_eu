@@ -27,6 +27,10 @@ resource "zone_dns_txt_record" "spf" {
 - `name` (String) The hostname for the TXT record (FQDN, e.g., example.com).
 - `destination` (String) The text content of the record.
 
+### Optional
+
+- `force_recreate` (Boolean) If true, updates an existing record with the same name instead of creating a new one. Default: `false`.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource in format `zone/record_id`.

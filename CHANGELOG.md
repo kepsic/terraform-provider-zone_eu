@@ -5,6 +5,30 @@ All notable changes to the Zone.EU Terraform Provider will be documented in this
 ## [Unreleased]
 
 ### Added
+- Input validation for all DNS record types:
+  - A records: IPv4 address validation
+  - AAAA records: IPv6 address validation
+  - MX records: Priority range validation (0-65535)
+  - CAA records: Flag range (0-255) and tag enum validation (`issue`, `issuewild`, `iodef`)
+  - SRV records: Priority, weight, and port range validation (0-65535)
+  - TLSA records: Certificate usage, selector, and matching type validation
+  - SSHFP records: Algorithm and fingerprint type validation
+  - URL records: URL format validation and redirect type validation (301, 302)
+- Context support in HTTP client for proper cancellation
+- ID attribute for `zone_domain` data source
+
+### Fixed
+- Delete operations are now idempotent - 404 errors are ignored for already-deleted resources
+- Removed incorrect `UseStateForUnknown()` plan modifiers from required mutable fields
+- Domain resource now properly handles 404 errors in Read method
+- Domain data source now properly sets ID attribute
+
+### Changed
+- HTTP client now uses `context.Context` for request cancellation support
+
+## [1.0.0] - Initial Release
+
+### Added
 - Initial release of Zone.EU Terraform Provider
 - DNS A record management (`zone_dns_a_record`)
 - DNS AAAA record management (`zone_dns_aaaa_record`)

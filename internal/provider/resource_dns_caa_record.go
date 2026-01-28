@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -71,13 +73,16 @@ func (r *DNSCAARecordResource) Schema(ctx context.Context, req resource.SchemaRe
 			"flag": schema.Int64Attribute{
 				Description: "The CAA record flag (0-255). Commonly 0 for non-critical or 128 for critical.",
 				Required:    true,
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
+				Validators: []validator.Int64{
+					int64validator.Between(0, 255),
 				},
 			},
 			"tag": schema.StringAttribute{
 				Description: "The CAA tag: issue, issuewild, or iodef.",
 				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("issue", "issuewild", "iodef"),
+				},
 			},
 			"record_id": schema.StringAttribute{
 				Description: "The ID of the record in Zone.EU.",
@@ -120,7 +125,7 @@ func (r *DNSCAARecordResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	// If force_recreate is true, check for existing record and delete it
+	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
 		existing, err := r.client.FindCAARecordByName(data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
@@ -128,15 +133,31 @@ func (r *DNSCAARecordResource) Create(ctx context.Context, req resource.CreateRe
 			return
 		}
 		if existing != nil {
-			tflog.Info(ctx, "force_recreate: deleting existing CAA record", map[string]interface{}{
+			tflog.Info(ctx, "force_recreate: updating existing CAA record instead of creating new", map[string]interface{}{
 				"zone":      data.Zone.ValueString(),
 				"name":      data.Name.ValueString(),
 				"record_id": existing.ID,
 			})
-			if err := r.client.DeleteCAARecord(data.Zone.ValueString(), existing.ID); err != nil {
-				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete existing CAA record for force_recreate, got error: %s", err))
+
+			record := &DNSRecord{
+				Name:        data.Name.ValueString(),
+				Destination: data.Destination.ValueString(),
+				Flag:        int(data.Flag.ValueInt64()),
+				Tag:         data.Tag.ValueString(),
+			}
+
+			updated, err := r.client.UpdateCAARecord(data.Zone.ValueString(), existing.ID, record)
+			if err != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing CAA record for force_recreate, got error: %s", err))
 				return
 			}
+
+			data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), updated.ID))
+			data.RecordID = types.StringValue(updated.ID)
+
+			tflog.Trace(ctx, "updated existing CAA record via force_recreate")
+			resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+			return
 		}
 	}
 
@@ -238,6 +259,10 @@ func (r *DNSCAARecordResource) Delete(ctx context.Context, req resource.DeleteRe
 
 	err = r.client.DeleteCAARecord(zone, recordID)
 	if err != nil {
+		// Ignore 404 errors - resource is already deleted
+		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
+			return
+		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete CAA record, got error: %s", err))
 		return
 	}

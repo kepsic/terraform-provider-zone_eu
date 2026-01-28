@@ -3,14 +3,17 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -64,6 +67,10 @@ func (r *DNSARecordResource) Schema(ctx context.Context, req resource.SchemaRequ
 			"destination": schema.StringAttribute{
 				Description: "The IPv4 address the record points to.",
 				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(7),
+					ipv4Validator{},
+				},
 			},
 			"record_id": schema.StringAttribute{
 				Description: "The ID of the record in Zone.EU.",
@@ -106,7 +113,7 @@ func (r *DNSARecordResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	// If force_recreate is true, check for existing record and delete it
+	// If force_recreate is true, check for existing record and update it instead of creating
 	if data.ForceRecreate.ValueBool() {
 		existing, err := r.client.FindARecordByName(data.Zone.ValueString(), data.Name.ValueString())
 		if err != nil {
@@ -114,15 +121,29 @@ func (r *DNSARecordResource) Create(ctx context.Context, req resource.CreateRequ
 			return
 		}
 		if existing != nil {
-			tflog.Info(ctx, "force_recreate: deleting existing A record", map[string]interface{}{
+			tflog.Info(ctx, "force_recreate: updating existing A record instead of creating new", map[string]interface{}{
 				"zone":      data.Zone.ValueString(),
 				"name":      data.Name.ValueString(),
 				"record_id": existing.ID,
 			})
-			if err := r.client.DeleteARecord(data.Zone.ValueString(), existing.ID); err != nil {
-				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete existing A record for force_recreate, got error: %s", err))
+
+			record := &DNSRecord{
+				Name:        data.Name.ValueString(),
+				Destination: data.Destination.ValueString(),
+			}
+
+			updated, err := r.client.UpdateARecord(data.Zone.ValueString(), existing.ID, record)
+			if err != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update existing A record for force_recreate, got error: %s", err))
 				return
 			}
+
+			data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), updated.ID))
+			data.RecordID = types.StringValue(updated.ID)
+
+			tflog.Trace(ctx, "updated existing A record via force_recreate")
+			resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+			return
 		}
 	}
 
@@ -218,6 +239,10 @@ func (r *DNSARecordResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	err = r.client.DeleteARecord(zone, recordID)
 	if err != nil {
+		// Ignore 404 errors - resource is already deleted
+		if strings.Contains(err.Error(), "404") || strings.Contains(err.Error(), "not found") {
+			return
+		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete A record, got error: %s", err))
 		return
 	}
@@ -247,4 +272,31 @@ func parseRecordID(id string) (zone, recordID string, err error) {
 		return "", "", fmt.Errorf("invalid ID format: %s, expected: zone/record_id", id)
 	}
 	return parts[0], parts[1], nil
+}
+
+// ipv4Validator validates that a string is a valid IPv4 address
+type ipv4Validator struct{}
+
+func (v ipv4Validator) Description(ctx context.Context) string {
+	return "value must be a valid IPv4 address"
+}
+
+func (v ipv4Validator) MarkdownDescription(ctx context.Context) string {
+	return "value must be a valid IPv4 address"
+}
+
+func (v ipv4Validator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	value := req.ConfigValue.ValueString()
+	ip := net.ParseIP(value)
+	if ip == nil || ip.To4() == nil {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid IPv4 Address",
+			fmt.Sprintf("The value %q is not a valid IPv4 address.", value),
+		)
+	}
 }

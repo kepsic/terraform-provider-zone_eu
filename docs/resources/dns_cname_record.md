@@ -27,6 +27,10 @@ resource "zone_dns_cname_record" "blog" {
 - `name` (String) The hostname for the CNAME record (FQDN, e.g., blog.example.com).
 - `destination` (String) The canonical hostname this record points to.
 
+### Optional
+
+- `force_recreate` (Boolean) If true, updates an existing record with the same name instead of creating a new one. Default: `false`.
+
 ### Read-Only
 
 - `id` (String) The ID of this resource in format `zone/record_id`.

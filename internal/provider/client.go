@@ -2,6 +2,7 @@ package provider
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -117,14 +118,27 @@ func (c *Client) waitForRateLimit() {
 }
 
 // doRequest performs an HTTP request with authentication and rate limiting
+// Uses context.Background() for backward compatibility - prefer doRequestWithContext for new code
 func (c *Client) doRequest(method, path string, body interface{}) ([]byte, error) {
+	return c.doRequestWithContext(context.Background(), method, path, body)
+}
+
+// doRequestWithContext performs an HTTP request with authentication, rate limiting, and context support
+func (c *Client) doRequestWithContext(ctx context.Context, method, path string, body interface{}) ([]byte, error) {
 	var lastErr error
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
+		// Check for context cancellation
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+
 		// Wait if we've hit rate limit
 		c.waitForRateLimit()
 
-		result, err := c.doRequestOnce(method, path, body)
+		result, err := c.doRequestOnce(ctx, method, path, body)
 		if err == nil {
 			return result, nil
 		}
@@ -160,7 +174,7 @@ func (e *RateLimitError) Error() string {
 }
 
 // doRequestOnce performs a single HTTP request
-func (c *Client) doRequestOnce(method, path string, body interface{}) ([]byte, error) {
+func (c *Client) doRequestOnce(ctx context.Context, method, path string, body interface{}) ([]byte, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		jsonBody, err := json.Marshal(body)
@@ -170,7 +184,7 @@ func (c *Client) doRequestOnce(method, path string, body interface{}) ([]byte, e
 		bodyReader = bytes.NewBuffer(jsonBody)
 	}
 
-	req, err := http.NewRequest(method, baseURL+path, bodyReader)
+	req, err := http.NewRequestWithContext(ctx, method, baseURL+path, bodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}

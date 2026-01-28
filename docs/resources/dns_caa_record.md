@@ -28,8 +28,12 @@ resource "zone_dns_caa_record" "letsencrypt" {
 - `zone` (String) The DNS zone name (domain name, e.g., example.com).
 - `name` (String) The hostname for the CAA record (FQDN, e.g., example.com).
 - `destination` (String) The value associated with the tag (e.g., CA domain).
-- `flag` (Number) The CAA record flag (0-255). Commonly 0 for non-critical or 128 for critical.
-- `tag` (String) The CAA tag: `issue`, `issuewild`, or `iodef`.
+- `flag` (Number) The CAA record flag. Must be between 0 and 255. Commonly 0 for non-critical or 128 for critical.
+- `tag` (String) The CAA tag. Must be one of: `issue`, `issuewild`, or `iodef`.
+
+### Optional
+
+- `force_recreate` (Boolean) If true, updates an existing record with the same name instead of creating a new one. Default: `false`.
 
 ### Read-Only
 
