@@ -20,7 +20,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "registry.terraform.io/zone-eu/zone",
+		Address: "registry.terraform.io/kepsic/zoneeu",
 		Debug:   debug,
 	}
 

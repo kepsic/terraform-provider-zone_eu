@@ -71,8 +71,8 @@ mkdir -p ~/.terraform.d/plugins
 cp terraform-provider-zone_eu ~/.terraform.d/plugins/
 
 # Or for Terraform 0.13+
-mkdir -p ~/.terraform.d/plugins/registry.terraform.io/zone/zone_eu/1.0.0/darwin_amd64/
-cp terraform-provider-zone_eu ~/.terraform.d/plugins/registry.terraform.io/zone/zone_eu/1.0.0/darwin_amd64/
+mkdir -p ~/.terraform.d/plugins/registry.terraform.io/kepsic/zoneeu/1.0.0/darwin_amd64/
+cp terraform-provider-zone_eu ~/.terraform.d/plugins/registry.terraform.io/kepsic/zoneeu/1.0.0/darwin_amd64/
 ```
 
 ## Configuration
@@ -80,7 +80,7 @@ cp terraform-provider-zone_eu ~/.terraform.d/plugins/registry.terraform.io/zone/
 ### Provider Configuration
 
 ```hcl
-provider "zone" {
+provider "zoneeu" {
   username = "your-zoneid-username"
   api_key  = "your-zoneid-api-key"
 }
@@ -104,7 +104,7 @@ The provider uses HTTP Basic Auth. You need:
 ### A Record
 
 ```hcl
-resource "zone_dns_a_record" "www" {
+resource "zoneeu_dns_a_record" "www" {
   zone        = "example.com"
   name        = "www.example.com"
   destination = "192.168.1.1"
@@ -114,7 +114,7 @@ resource "zone_dns_a_record" "www" {
 ### AAAA Record (IPv6)
 
 ```hcl
-resource "zone_dns_aaaa_record" "www" {
+resource "zoneeu_dns_aaaa_record" "www" {
   zone        = "example.com"
   name        = "www.example.com"
   destination = "2001:db8::1"
@@ -124,7 +124,7 @@ resource "zone_dns_aaaa_record" "www" {
 ### CNAME Record
 
 ```hcl
-resource "zone_dns_cname_record" "blog" {
+resource "zoneeu_dns_cname_record" "blog" {
   zone        = "example.com"
   name        = "blog.example.com"
   destination = "bloghost.example.net"
@@ -134,7 +134,7 @@ resource "zone_dns_cname_record" "blog" {
 ### MX Record
 
 ```hcl
-resource "zone_dns_mx_record" "mail" {
+resource "zoneeu_dns_mx_record" "mail" {
   zone        = "example.com"
   name        = "example.com"
   destination = "mail.example.com"
@@ -145,7 +145,7 @@ resource "zone_dns_mx_record" "mail" {
 ### TXT Record (SPF)
 
 ```hcl
-resource "zone_dns_txt_record" "spf" {
+resource "zoneeu_dns_txt_record" "spf" {
   zone        = "example.com"
   name        = "example.com"
   destination = "v=spf1 include:_spf.google.com ~all"
@@ -155,7 +155,7 @@ resource "zone_dns_txt_record" "spf" {
 ### NS Record
 
 ```hcl
-resource "zone_dns_ns_record" "subdomain" {
+resource "zoneeu_dns_ns_record" "subdomain" {
   zone        = "example.com"
   name        = "subdomain.example.com"
   destination = "ns1.otherdns.com"
@@ -165,7 +165,7 @@ resource "zone_dns_ns_record" "subdomain" {
 ### SRV Record
 
 ```hcl
-resource "zone_dns_srv_record" "sip" {
+resource "zoneeu_dns_srv_record" "sip" {
   zone        = "example.com"
   name        = "_sip._tcp.example.com"
   destination = "sipserver.example.com"
@@ -178,7 +178,7 @@ resource "zone_dns_srv_record" "sip" {
 ### CAA Record
 
 ```hcl
-resource "zone_dns_caa_record" "letsencrypt" {
+resource "zoneeu_dns_caa_record" "letsencrypt" {
   zone        = "example.com"
   name        = "example.com"
   destination = "letsencrypt.org"
@@ -190,7 +190,7 @@ resource "zone_dns_caa_record" "letsencrypt" {
 ### TLSA Record (DANE)
 
 ```hcl
-resource "zone_dns_tlsa_record" "https" {
+resource "zoneeu_dns_tlsa_record" "https" {
   zone              = "example.com"
   name              = "_443._tcp.example.com"
   destination       = "abc123def456..."
@@ -203,7 +203,7 @@ resource "zone_dns_tlsa_record" "https" {
 ### SSHFP Record
 
 ```hcl
-resource "zone_dns_sshfp_record" "server" {
+resource "zoneeu_dns_sshfp_record" "server" {
   zone        = "example.com"
   name        = "server.example.com"
   destination = "abc123def456..."
@@ -215,7 +215,7 @@ resource "zone_dns_sshfp_record" "server" {
 ### URL Redirect Record
 
 ```hcl
-resource "zone_dns_url_record" "redirect" {
+resource "zoneeu_dns_url_record" "redirect" {
   zone          = "example.com"
   name          = "old.example.com"
   destination   = "https://new.example.com/page"
@@ -226,12 +226,12 @@ resource "zone_dns_url_record" "redirect" {
 ### Data Source: DNS Zone
 
 ```hcl
-data "zone_dns_zone" "main" {
+data "zoneeu_dns_zone" "main" {
   name = "example.com"
 }
 
 output "zone_active" {
-  value = data.zone_dns_zone.main.active
+  value = data.zoneeu_dns_zone.main.active
 }
 ```
 
@@ -240,7 +240,7 @@ output "zone_active" {
 Manage settings for an existing domain:
 
 ```hcl
-resource "zone_domain" "example" {
+resource "zoneeu_domain" "example" {
   name                   = "example.com"
   autorenew              = true
   dnssec                 = true
@@ -252,12 +252,12 @@ resource "zone_domain" "example" {
 ### Data Source: Domain
 
 ```hcl
-data "zone_domain" "example" {
+data "zoneeu_domain" "example" {
   name = "example.com"
 }
 
 output "domain_expires" {
-  value = data.zone_domain.example.expires
+  value = data.zoneeu_domain.example.expires
 }
 ```
 
@@ -266,26 +266,26 @@ output "domain_expires" {
 To use custom nameservers, first enable them on the domain, then add the nameserver records:
 
 ```hcl
-resource "zone_domain" "example" {
+resource "zoneeu_domain" "example" {
   name               = "example.com"
   nameservers_custom = true
 }
 
-resource "zone_domain_nameserver" "ns1" {
-  domain   = zone_domain.example.name
+resource "zoneeu_domain_nameserver" "ns1" {
+  domain   = zoneeu_domain.example.name
   hostname = "ns1.example.com"
   ip       = ["192.168.1.1"]  # Glue record - required when NS is under same domain
 }
 
-resource "zone_domain_nameserver" "ns2" {
-  domain   = zone_domain.example.name
+resource "zoneeu_domain_nameserver" "ns2" {
+  domain   = zoneeu_domain.example.name
   hostname = "ns2.example.com"
   ip       = ["192.168.1.2"]
 }
 
 # External nameserver (no glue record needed)
-resource "zone_domain_nameserver" "external" {
-  domain   = zone_domain.example.name
+resource "zoneeu_domain_nameserver" "external" {
+  domain   = zoneeu_domain.example.name
   hostname = "ns1.externaldns.com"
 }
 ```
@@ -297,19 +297,19 @@ All resources support importing:
 ### DNS Records
 ```bash
 # Format: zone/record_id
-terraform import zone_dns_a_record.www example.com/123
+terraform import zoneeu_dns_a_record.www example.com/123
 ```
 
 ### Domain
 ```bash
 # Format: domain_name
-terraform import zone_domain.example example.com
+terraform import zoneeu_domain.example example.com
 ```
 
 ### Domain Nameserver
 ```bash
 # Format: domain/hostname
-terraform import zone_domain_nameserver.ns1 example.com/ns1.example.com
+terraform import zoneeu_domain_nameserver.ns1 example.com/ns1.example.com
 ```
 
 ## API Rate Limits
