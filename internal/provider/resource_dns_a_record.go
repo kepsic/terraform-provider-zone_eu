@@ -154,6 +154,21 @@ func (r *DNSARecordResource) Create(ctx context.Context, req resource.CreateRequ
 
 	created, err := r.client.CreateARecord(data.Zone.ValueString(), record)
 	if err != nil {
+		// Handle zone_conflict by adopting existing record into state
+		if strings.Contains(err.Error(), "zone_conflict") {
+			tflog.Info(ctx, "Record already exists (zone_conflict), adopting into state", map[string]interface{}{
+				"zone": data.Zone.ValueString(),
+				"name": data.Name.ValueString(),
+			})
+			existing, findErr := r.client.FindARecordByName(data.Zone.ValueString(), data.Name.ValueString())
+			if findErr == nil && existing != nil {
+				data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), existing.ID))
+				data.RecordID = types.StringValue(existing.ID)
+				resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+				return
+			}
+			// If we couldn't find/adopt, fall through to error
+		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create A record, got error: %s", err))
 		return
 	}
