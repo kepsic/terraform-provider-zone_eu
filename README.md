@@ -238,7 +238,21 @@ terraform import zone_dns_a_record.www example.com/123
 
 ## API Rate Limits
 
-The Zone.EU API has a rate limit of 60 requests per minute per IP address. The provider does not currently implement rate limiting, so be cautious with large configurations.
+The Zone.EU API has a rate limit of 60 requests per minute per IP address.
+
+The provider automatically handles rate limiting:
+
+- **Tracks rate limit headers**: Reads `X-Ratelimit-Limit` and `X-Ratelimit-Remaining` from API responses
+- **Automatic retry**: When rate limited (HTTP 429), the provider waits and retries automatically (up to 3 times)
+- **Respects Retry-After**: Uses the `Retry-After` header when provided, defaults to 60 seconds
+
+| HTTP Code | Description |
+|-----------|-------------|
+| 200 | Successful GET request |
+| 201 | Successful POST/PUT request |
+| 204 | Successful DELETE request |
+| 422 | Validation errors in request |
+| 429 | Rate limit exceeded (auto-retry) |
 
 ## Developing the Provider
 
