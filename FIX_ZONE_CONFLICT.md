@@ -11,19 +11,71 @@ Unable to create CNAME record, got error: API error (status 422):
 {"name":"zone_conflict"} (X-Status-Message: Puudulik sisend)
 ```
 
+## Root Cause Analysis
+
+The current fix in commit `3bdb609` added zone_conflict handling but it's NOT WORKING because of a **name format mismatch**:
+
+1. Terraform passes FQDN: `name = "caddy.vermare.ee"`
+2. Zone.eu API returns short name: `name = "caddy"` (without zone suffix)
+3. The comparison `r.Name == name` fails because `"caddy" != "caddy.vermare.ee"`
+
 ## Required Fix
 
-In each DNS resource's Create function, after the create API call fails with "zone_conflict", the provider should:
+### Step 1: Fix FindXXXRecordByName functions in client.go
 
-1. Find the existing record by name using the existing `FindXXXRecordByName()` client method
-2. Adopt that record into Terraform state by setting the ID and RecordID
-3. Return successfully (not error)
+The `FindXXXRecordByName` functions need to handle both FQDN and short name formats:
 
-This makes Terraform idempotent - if a record exists, it gets adopted instead of erroring.
+```go
+func (c *Client) FindCNAMERecordByName(zone, name string) (*DNSRecord, error) {
+    records, err := c.ListCNAMERecords(zone)
+    if err != nil {
+        return nil, err
+    }
+    
+    // Normalize the search name - strip zone suffix if present
+    searchName := name
+    zoneSuffix := "." + zone
+    if strings.HasSuffix(name, zoneSuffix) {
+        searchName = strings.TrimSuffix(name, zoneSuffix)
+    }
+    
+    for _, r := range records {
+        // Compare both the record name and normalized search name
+        recordName := r.Name
+        if strings.HasSuffix(r.Name, zoneSuffix) {
+            recordName = strings.TrimSuffix(r.Name, zoneSuffix)
+        }
+        
+        if recordName == searchName || r.Name == name {
+            return &r, nil
+        }
+    }
+    return nil, nil // Not found
+}
+```
+
+Apply this same pattern to ALL FindXXXRecordByName functions:
+- `FindARecordByName`
+- `FindAAAARecordByName`
+- `FindCNAMERecordByName`
+- `FindTXTRecordByName`
+- `FindMXRecordByName`
+- `FindNSRecordByName`
+- `FindSRVRecordByName`
+- `FindCAARecordByName`
+- `FindSSHFPRecordByName`
+- `FindTLSARecordByName`
+- `FindURLRecordByName`
+
+### Step 2: The Create function zone_conflict handling (already done)
+
+The Create functions already have zone_conflict handling from commit `3bdb609`. Once Step 1 is fixed, they will work correctly.
 
 ## Files to Modify
 
-Apply this pattern to all DNS record resources:
+**client.go** - Fix all FindXXXRecordByName functions to handle name format mismatch
+
+All DNS resource files already have zone_conflict handling:
 
 - `internal/provider/resource_dns_a_record.go`
 - `internal/provider/resource_dns_aaaa_record.go`
@@ -37,82 +89,18 @@ Apply this pattern to all DNS record resources:
 - `internal/provider/resource_dns_tlsa_record.go`
 - `internal/provider/resource_dns_url_record.go`
 
-## Example Fix for CNAME
-
-In the `Create` function, change this:
-
-```go
-created, err := r.client.CreateCNAMERecord(data.Zone.ValueString(), record)
-if err != nil {
-    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create CNAME record, got error: %s", err))
-    return
-}
-```
-
-To this:
-
-```go
-created, err := r.client.CreateCNAMERecord(data.Zone.ValueString(), record)
-if err != nil {
-    // Handle zone_conflict by adopting existing record into state
-    if strings.Contains(err.Error(), "zone_conflict") {
-        tflog.Info(ctx, "Record already exists (zone_conflict), adopting into state", map[string]interface{}{
-            "zone": data.Zone.ValueString(),
-            "name": data.Name.ValueString(),
-        })
-        existing, findErr := r.client.FindCNAMERecordByName(data.Zone.ValueString(), data.Name.ValueString())
-        if findErr == nil && existing != nil {
-            data.ID = types.StringValue(fmt.Sprintf("%s/%s", data.Zone.ValueString(), existing.ID))
-            data.RecordID = types.StringValue(existing.ID)
-            resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-            return
-        }
-        // If we couldn't find/adopt, fall through to error
-    }
-    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create CNAME record, got error: %s", err))
-    return
-}
-```
-
-## Pattern for Each Record Type
-
-| Record Type | Create Method | Find Method |
-|-------------|---------------|-------------|
-| A | `CreateARecord` | `FindARecordByName` |
-| AAAA | `CreateAAAARecord` | `FindAAAARecordByName` |
-| CNAME | `CreateCNAMERecord` | `FindCNAMERecordByName` |
-| TXT | `CreateTXTRecord` | `FindTXTRecordByName` |
-| MX | `CreateMXRecord` | `FindMXRecordByName` |
-| NS | `CreateNSRecord` | `FindNSRecordByName` |
-| SRV | `CreateSRVRecord` | `FindSRVRecordByName` |
-| CAA | `CreateCAARecord` | `FindCAARecordByName` |
-| SSHFP | `CreateSSHFPRecord` | `FindSSHFPRecordByName` |
-| TLSA | `CreateTLSARecord` | `FindTLSARecordByName` |
-| URL | `CreateURLRecord` | `FindURLRecordByName` |
-
-## Important Notes
-
-1. Each record type has its own Create function and FindByName method
-2. The `strings` package is already imported in all resource files
-3. The `tflog` package is already imported in all resource files
-4. This fix makes Terraform idempotent - running `terraform apply` multiple times won't fail if records already exist
-5. The existing record gets "adopted" into Terraform state, allowing future updates/deletes to work correctly
-
 ## Testing
 
 After making changes:
 
 ```bash
 # Build the provider
+cd /Users/andrke/dev/terraform-provider-zone_eu
 go build -o terraform-provider-zoneeu
 
-# Install locally
-mkdir -p ~/.terraform.d/plugins/registry.terraform.io/kepsic/zoneeu/99.0.0/darwin_arm64
-cp terraform-provider-zoneeu ~/.terraform.d/plugins/registry.terraform.io/kepsic/zoneeu/99.0.0/darwin_arm64/terraform-provider-zoneeu_v99.0.0
-
+# The dev_overrides in ~/.terraformrc will use this build
 # Test with terraform
-cd /path/to/terraform/config
-terraform init -upgrade
+cd /Users/andrke/dev/paplirahu/infrastructure/environments/production
 terraform apply
 ```
 
@@ -127,3 +115,21 @@ module.tenant["ee"].zoneeu_dns_cname_record.app["app.vermare.ee"]: Creation comp
 
 Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 ```
+
+## Debug Info
+
+Current state shows name format:
+```hcl
+# Working record in state:
+resource "zoneeu_dns_cname_record" "www" {
+    name           = "www.vermare.lv"   # FQDN format
+    zone           = "vermare.lv"
+}
+```
+
+But Zone.eu API might return:
+```json
+{"name": "www", "destination": "..."}  // Short format without zone
+```
+
+This is why the comparison fails and the fix doesn't work.
