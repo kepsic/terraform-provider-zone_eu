@@ -52,6 +52,32 @@ func (c *Client) authHeader() string {
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
 }
 
+// parseDNSRecordResponse parses the API response which always returns an array
+// and extracts the first element
+func parseDNSRecordResponse(resp []byte) (*DNSRecord, error) {
+	var records []DNSRecord
+	if err := json.Unmarshal(resp, &records); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	if len(records) == 0 {
+		return nil, fmt.Errorf("empty response from API")
+	}
+	return &records[0], nil
+}
+
+// parseDNSZoneResponse parses the API response which always returns an array
+// and extracts the first element
+func parseDNSZoneResponse(resp []byte) (*DNSZone, error) {
+	var zones []DNSZone
+	if err := json.Unmarshal(resp, &zones); err != nil {
+		return nil, fmt.Errorf("error parsing response: %w", err)
+	}
+	if len(zones) == 0 {
+		return nil, fmt.Errorf("empty response from API")
+	}
+	return &zones[0], nil
+}
+
 // updateRateLimitInfo updates rate limit info from response headers
 func (c *Client) updateRateLimitInfo(resp *http.Response) {
 	c.mu.Lock()
@@ -246,11 +272,7 @@ func (c *Client) GetARecord(zone, id string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-	var record DNSRecord
-	if err := json.Unmarshal(resp, &record); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &record, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) CreateARecord(zone string, record *DNSRecord) (*DNSRecord, error) {
@@ -258,11 +280,7 @@ func (c *Client) CreateARecord(zone string, record *DNSRecord) (*DNSRecord, erro
 	if err != nil {
 		return nil, err
 	}
-	var created DNSRecord
-	if err := json.Unmarshal(resp, &created); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &created, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) UpdateARecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
@@ -270,11 +288,7 @@ func (c *Client) UpdateARecord(zone, id string, record *DNSRecord) (*DNSRecord, 
 	if err != nil {
 		return nil, err
 	}
-	var updated DNSRecord
-	if err := json.Unmarshal(resp, &updated); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &updated, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) DeleteARecord(zone, id string) error {
@@ -289,11 +303,7 @@ func (c *Client) GetAAAARecord(zone, id string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-	var record DNSRecord
-	if err := json.Unmarshal(resp, &record); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &record, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) CreateAAAARecord(zone string, record *DNSRecord) (*DNSRecord, error) {
@@ -301,11 +311,7 @@ func (c *Client) CreateAAAARecord(zone string, record *DNSRecord) (*DNSRecord, e
 	if err != nil {
 		return nil, err
 	}
-	var created DNSRecord
-	if err := json.Unmarshal(resp, &created); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &created, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) UpdateAAAARecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
@@ -313,11 +319,7 @@ func (c *Client) UpdateAAAARecord(zone, id string, record *DNSRecord) (*DNSRecor
 	if err != nil {
 		return nil, err
 	}
-	var updated DNSRecord
-	if err := json.Unmarshal(resp, &updated); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &updated, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) DeleteAAAARecord(zone, id string) error {
@@ -332,11 +334,7 @@ func (c *Client) GetCNAMERecord(zone, id string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-	var record DNSRecord
-	if err := json.Unmarshal(resp, &record); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &record, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) CreateCNAMERecord(zone string, record *DNSRecord) (*DNSRecord, error) {
@@ -344,11 +342,7 @@ func (c *Client) CreateCNAMERecord(zone string, record *DNSRecord) (*DNSRecord, 
 	if err != nil {
 		return nil, err
 	}
-	var created DNSRecord
-	if err := json.Unmarshal(resp, &created); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &created, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) UpdateCNAMERecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
@@ -356,11 +350,7 @@ func (c *Client) UpdateCNAMERecord(zone, id string, record *DNSRecord) (*DNSReco
 	if err != nil {
 		return nil, err
 	}
-	var updated DNSRecord
-	if err := json.Unmarshal(resp, &updated); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &updated, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) DeleteCNAMERecord(zone, id string) error {
@@ -375,11 +365,7 @@ func (c *Client) GetMXRecord(zone, id string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-	var record DNSRecord
-	if err := json.Unmarshal(resp, &record); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &record, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) CreateMXRecord(zone string, record *DNSRecord) (*DNSRecord, error) {
@@ -387,11 +373,7 @@ func (c *Client) CreateMXRecord(zone string, record *DNSRecord) (*DNSRecord, err
 	if err != nil {
 		return nil, err
 	}
-	var created DNSRecord
-	if err := json.Unmarshal(resp, &created); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &created, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) UpdateMXRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
@@ -399,11 +381,7 @@ func (c *Client) UpdateMXRecord(zone, id string, record *DNSRecord) (*DNSRecord,
 	if err != nil {
 		return nil, err
 	}
-	var updated DNSRecord
-	if err := json.Unmarshal(resp, &updated); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &updated, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) DeleteMXRecord(zone, id string) error {
@@ -418,11 +396,7 @@ func (c *Client) GetTXTRecord(zone, id string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-	var record DNSRecord
-	if err := json.Unmarshal(resp, &record); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &record, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) CreateTXTRecord(zone string, record *DNSRecord) (*DNSRecord, error) {
@@ -430,11 +404,7 @@ func (c *Client) CreateTXTRecord(zone string, record *DNSRecord) (*DNSRecord, er
 	if err != nil {
 		return nil, err
 	}
-	var created DNSRecord
-	if err := json.Unmarshal(resp, &created); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &created, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) UpdateTXTRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
@@ -442,11 +412,7 @@ func (c *Client) UpdateTXTRecord(zone, id string, record *DNSRecord) (*DNSRecord
 	if err != nil {
 		return nil, err
 	}
-	var updated DNSRecord
-	if err := json.Unmarshal(resp, &updated); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &updated, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) DeleteTXTRecord(zone, id string) error {
@@ -461,11 +427,7 @@ func (c *Client) GetNSRecord(zone, id string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-	var record DNSRecord
-	if err := json.Unmarshal(resp, &record); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &record, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) CreateNSRecord(zone string, record *DNSRecord) (*DNSRecord, error) {
@@ -473,11 +435,7 @@ func (c *Client) CreateNSRecord(zone string, record *DNSRecord) (*DNSRecord, err
 	if err != nil {
 		return nil, err
 	}
-	var created DNSRecord
-	if err := json.Unmarshal(resp, &created); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &created, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) UpdateNSRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
@@ -485,11 +443,7 @@ func (c *Client) UpdateNSRecord(zone, id string, record *DNSRecord) (*DNSRecord,
 	if err != nil {
 		return nil, err
 	}
-	var updated DNSRecord
-	if err := json.Unmarshal(resp, &updated); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &updated, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) DeleteNSRecord(zone, id string) error {
@@ -504,11 +458,7 @@ func (c *Client) GetSRVRecord(zone, id string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-	var record DNSRecord
-	if err := json.Unmarshal(resp, &record); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &record, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) CreateSRVRecord(zone string, record *DNSRecord) (*DNSRecord, error) {
@@ -516,11 +466,7 @@ func (c *Client) CreateSRVRecord(zone string, record *DNSRecord) (*DNSRecord, er
 	if err != nil {
 		return nil, err
 	}
-	var created DNSRecord
-	if err := json.Unmarshal(resp, &created); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &created, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) UpdateSRVRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
@@ -528,11 +474,7 @@ func (c *Client) UpdateSRVRecord(zone, id string, record *DNSRecord) (*DNSRecord
 	if err != nil {
 		return nil, err
 	}
-	var updated DNSRecord
-	if err := json.Unmarshal(resp, &updated); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &updated, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) DeleteSRVRecord(zone, id string) error {
@@ -547,11 +489,7 @@ func (c *Client) GetCAARecord(zone, id string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-	var record DNSRecord
-	if err := json.Unmarshal(resp, &record); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &record, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) CreateCAARecord(zone string, record *DNSRecord) (*DNSRecord, error) {
@@ -559,11 +497,7 @@ func (c *Client) CreateCAARecord(zone string, record *DNSRecord) (*DNSRecord, er
 	if err != nil {
 		return nil, err
 	}
-	var created DNSRecord
-	if err := json.Unmarshal(resp, &created); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &created, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) UpdateCAARecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
@@ -571,11 +505,7 @@ func (c *Client) UpdateCAARecord(zone, id string, record *DNSRecord) (*DNSRecord
 	if err != nil {
 		return nil, err
 	}
-	var updated DNSRecord
-	if err := json.Unmarshal(resp, &updated); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &updated, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) DeleteCAARecord(zone, id string) error {
@@ -590,11 +520,7 @@ func (c *Client) GetTLSARecord(zone, id string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-	var record DNSRecord
-	if err := json.Unmarshal(resp, &record); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &record, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) CreateTLSARecord(zone string, record *DNSRecord) (*DNSRecord, error) {
@@ -602,11 +528,7 @@ func (c *Client) CreateTLSARecord(zone string, record *DNSRecord) (*DNSRecord, e
 	if err != nil {
 		return nil, err
 	}
-	var created DNSRecord
-	if err := json.Unmarshal(resp, &created); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &created, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) UpdateTLSARecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
@@ -614,11 +536,7 @@ func (c *Client) UpdateTLSARecord(zone, id string, record *DNSRecord) (*DNSRecor
 	if err != nil {
 		return nil, err
 	}
-	var updated DNSRecord
-	if err := json.Unmarshal(resp, &updated); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &updated, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) DeleteTLSARecord(zone, id string) error {
@@ -633,11 +551,7 @@ func (c *Client) GetSSHFPRecord(zone, id string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-	var record DNSRecord
-	if err := json.Unmarshal(resp, &record); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &record, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) CreateSSHFPRecord(zone string, record *DNSRecord) (*DNSRecord, error) {
@@ -645,11 +559,7 @@ func (c *Client) CreateSSHFPRecord(zone string, record *DNSRecord) (*DNSRecord, 
 	if err != nil {
 		return nil, err
 	}
-	var created DNSRecord
-	if err := json.Unmarshal(resp, &created); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &created, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) UpdateSSHFPRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
@@ -657,11 +567,7 @@ func (c *Client) UpdateSSHFPRecord(zone, id string, record *DNSRecord) (*DNSReco
 	if err != nil {
 		return nil, err
 	}
-	var updated DNSRecord
-	if err := json.Unmarshal(resp, &updated); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &updated, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) DeleteSSHFPRecord(zone, id string) error {
@@ -676,11 +582,7 @@ func (c *Client) GetURLRecord(zone, id string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-	var record DNSRecord
-	if err := json.Unmarshal(resp, &record); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &record, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) CreateURLRecord(zone string, record *DNSRecord) (*DNSRecord, error) {
@@ -688,11 +590,7 @@ func (c *Client) CreateURLRecord(zone string, record *DNSRecord) (*DNSRecord, er
 	if err != nil {
 		return nil, err
 	}
-	var created DNSRecord
-	if err := json.Unmarshal(resp, &created); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &created, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) UpdateURLRecord(zone, id string, record *DNSRecord) (*DNSRecord, error) {
@@ -700,11 +598,7 @@ func (c *Client) UpdateURLRecord(zone, id string, record *DNSRecord) (*DNSRecord
 	if err != nil {
 		return nil, err
 	}
-	var updated DNSRecord
-	if err := json.Unmarshal(resp, &updated); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &updated, nil
+	return parseDNSRecordResponse(resp)
 }
 
 func (c *Client) DeleteURLRecord(zone, id string) error {
@@ -719,11 +613,7 @@ func (c *Client) GetDNSZone(zone string) (*DNSZone, error) {
 	if err != nil {
 		return nil, err
 	}
-	var dnsZone DNSZone
-	if err := json.Unmarshal(resp, &dnsZone); err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-	return &dnsZone, nil
+	return parseDNSZoneResponse(resp)
 }
 
 // ==================== Domain Management ====================
@@ -892,11 +782,14 @@ func (c *Client) UpdateDomainNameserver(domain, hostname string, ns *DomainNames
 	if err != nil {
 		return nil, err
 	}
-	var updated DomainNameserver
+	var updated []DomainNameserver
 	if err := json.Unmarshal(resp, &updated); err != nil {
 		return nil, fmt.Errorf("error parsing response: %w", err)
 	}
-	return &updated, nil
+	if len(updated) == 0 {
+		return nil, fmt.Errorf("nameserver not found after update: %s", hostname)
+	}
+	return &updated[0], nil
 }
 
 // DeleteDomainNameserver deletes a nameserver
