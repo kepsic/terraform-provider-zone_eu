@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -300,8 +301,15 @@ func (c *Client) FindARecordByName(zone, name string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+	
 	for _, r := range records {
-		if r.Name == name {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
 			return &r, nil
 		}
 	}
@@ -358,8 +366,15 @@ func (c *Client) FindAAAARecordByName(zone, name string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+	
 	for _, r := range records {
-		if r.Name == name {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
 			return &r, nil
 		}
 	}
@@ -416,8 +431,15 @@ func (c *Client) FindCNAMERecordByName(zone, name string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+	
 	for _, r := range records {
-		if r.Name == name {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
 			return &r, nil
 		}
 	}
@@ -474,8 +496,15 @@ func (c *Client) FindMXRecordByName(zone, name string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+	
 	for _, r := range records {
-		if r.Name == name {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
 			return &r, nil
 		}
 	}
@@ -532,8 +561,15 @@ func (c *Client) FindTXTRecordByName(zone, name string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+	
 	for _, r := range records {
-		if r.Name == name {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
 			return &r, nil
 		}
 	}
@@ -590,8 +626,15 @@ func (c *Client) FindNSRecordByName(zone, name string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+	
 	for _, r := range records {
-		if r.Name == name {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
 			return &r, nil
 		}
 	}
@@ -648,8 +691,15 @@ func (c *Client) FindSRVRecordByName(zone, name string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+	
 	for _, r := range records {
-		if r.Name == name {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
 			return &r, nil
 		}
 	}
@@ -706,8 +756,15 @@ func (c *Client) FindCAARecordByName(zone, name string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+	
 	for _, r := range records {
-		if r.Name == name {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
 			return &r, nil
 		}
 	}
@@ -764,8 +821,15 @@ func (c *Client) FindTLSARecordByName(zone, name string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+	
 	for _, r := range records {
-		if r.Name == name {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
 			return &r, nil
 		}
 	}
@@ -822,8 +886,15 @@ func (c *Client) FindSSHFPRecordByName(zone, name string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+	
 	for _, r := range records {
-		if r.Name == name {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
 			return &r, nil
 		}
 	}
@@ -880,8 +951,15 @@ func (c *Client) FindURLRecordByName(zone, name string) (*DNSRecord, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+	
 	for _, r := range records {
-		if r.Name == name {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
 			return &r, nil
 		}
 	}
