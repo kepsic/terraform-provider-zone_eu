@@ -1,31 +1,35 @@
-*.dll
+# Build artifacts
+terraform-provider-*
 *.exe
-.DS_Store
-example.tf
-terraform.tfplan
-terraform.tfstate
-bin/
-modules-dev/
-/pkg/
-website/.vagrant
-website/.bundle
-website/build
-website/node_modules
-.vagrant/
-*.backup
-./*.tfstate
-.terraform/
-*.log
-*.bak
+*.dll
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
 *~
-.*.swp
-.idea
-*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
+# Go
+vendor/
 *.test
-*.iml
+coverage.out
+coverage.html
 
-website/vendor
+# Local development
+.env
+*.local
 
-# Test exclusions
-!command/test-fixtures/**/*.tfstate
-!command/test-fixtures/**/.terraform/
+# Releases
+dist/

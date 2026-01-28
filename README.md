@@ -1,94 +1,259 @@
-<!-- archived-provider -->
-This Terraform provider is archived, per our [provider archiving process](https://terraform.io/docs/internals/archiving.html). What does this mean?
+# Terraform Provider for Zone.EU
 
-1. The code repository and all commit history will still be available.
-1. Existing released binaries will remain available on the releases site.
-1. Documentation will remain on the Terraform website.
-1. Issues and pull requests are not being monitored.
-1. New releases will not be published.
+This is a Terraform provider for managing DNS records on [Zone.EU](https://www.zone.ee) hosting platform via their [API v2](https://api.zone.eu/v2).
 
+## Features
 
-Please see https://github.com/hashicorp/terraform-provider-template/issues/85 and the documentation for recommended replacements.
+### Implemented (DNS Management)
 
----
+- **DNS A Record** - IPv4 address records
+- **DNS AAAA Record** - IPv6 address records
+- **DNS CNAME Record** - Canonical name (alias) records
+- **DNS MX Record** - Mail exchange records
+- **DNS TXT Record** - Text records (SPF, DKIM, etc.)
+- **DNS NS Record** - Nameserver records
+- **DNS SRV Record** - Service locator records
+- **DNS CAA Record** - Certificate Authority Authorization records
+- **DNS TLSA Record** - DANE/TLS authentication records
+- **DNS SSHFP Record** - SSH fingerprint records
+- **DNS URL Record** - URL redirect records (Zone.EU specific)
 
-<!-- /archived-provider -->
+### Data Sources
 
-Terraform Provider
-==================
+- **DNS Zone** - Read DNS zone information
 
-- Website: https://www.terraform.io
-- [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
-- Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
+### Not Yet Implemented
 
-<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" width="600px">
+The Zone.EU API supports many other services that are not yet implemented in this provider:
 
-Maintainers
------------
+- **Domain Management** - Domain registration, renewal, nameserver management
+- **Webhosting (vserver)** - Virtual server management
+- **E-mail** - Email account management
+- **MySQL** - Database management
+- **SSL Certificates** - SSL/TLS certificate management
+- **Crontab** - Scheduled task management
+- **Redis** - Redis database management
+- **PM2** - Node.js process management
+- **SSH** - SSH key and whitelist management
+- **Port Forward** - Port forwarding configuration
+- **Cloudserver VPS** - Cloud VPS management
 
-This provider plugin is maintained by the Terraform team at [HashiCorp](https://www.hashicorp.com/).
+## Requirements
 
-Requirements
-------------
+- [Terraform](https://www.terraform.io/downloads.html) >= 0.12
+- [Go](https://golang.org/doc/install) >= 1.21 (for building from source)
+- Zone.EU account with API access enabled
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.10.x
--	[Go](https://golang.org/doc/install) 1.11 (to build the provider plugin)
+## Installation
 
-Usage
----------------------
+### Building from source
 
+```bash
+git clone https://github.com/terraform-providers/terraform-provider-zone_eu.git
+cd terraform-provider-zone_eu
+go build -o terraform-provider-zone_eu
 ```
-# For example, restrict template version in 0.1.x
-provider "template" {
-  version = "~> 0.1"
+
+### Installing locally
+
+Copy the built binary to your Terraform plugins directory:
+
+```bash
+# Linux/macOS
+mkdir -p ~/.terraform.d/plugins
+cp terraform-provider-zone_eu ~/.terraform.d/plugins/
+
+# Or for Terraform 0.13+
+mkdir -p ~/.terraform.d/plugins/registry.terraform.io/zone/zone_eu/1.0.0/darwin_amd64/
+cp terraform-provider-zone_eu ~/.terraform.d/plugins/registry.terraform.io/zone/zone_eu/1.0.0/darwin_amd64/
+```
+
+## Configuration
+
+### Provider Configuration
+
+```hcl
+provider "zone" {
+  username = "your-zoneid-username"
+  api_key  = "your-zoneid-api-key"
 }
 ```
 
-Building The Provider
----------------------
+You can also use environment variables:
 
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-template`
-
-```sh
-$ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone git@github.com:terraform-providers/terraform-provider-template
+```bash
+export ZONE_EU_USERNAME="your-zoneid-username"
+export ZONE_EU_API_KEY="your-zoneid-api-key"
 ```
 
-Enter the provider directory and build the provider
+### Authentication
 
-```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-template
-$ make build
+The provider uses HTTP Basic Auth. You need:
+1. Your ZoneID username
+2. An API key generated in your ZoneID account management
+
+## Usage Examples
+
+### A Record
+
+```hcl
+resource "zone_dns_a_record" "www" {
+  zone        = "example.com"
+  name        = "www.example.com"
+  destination = "192.168.1.1"
+}
 ```
 
-Using the provider
-----------------------
-## Fill in for each provider
+### AAAA Record (IPv6)
 
-Developing the Provider
----------------------------
-
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.11+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
-
-To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
-
-```sh
-$ make build
-...
-$ $GOPATH/bin/terraform-provider-template
-...
+```hcl
+resource "zone_dns_aaaa_record" "www" {
+  zone        = "example.com"
+  name        = "www.example.com"
+  destination = "2001:db8::1"
+}
 ```
 
-In order to test the provider, you can simply run `make test`.
+### CNAME Record
 
-```sh
-$ make test
+```hcl
+resource "zone_dns_cname_record" "blog" {
+  zone        = "example.com"
+  name        = "blog.example.com"
+  destination = "bloghost.example.net"
+}
 ```
 
-In order to run the full suite of Acceptance tests, run `make testacc`.
+### MX Record
 
-*Note:* Acceptance tests create real resources, and often cost money to run.
+```hcl
+resource "zone_dns_mx_record" "mail" {
+  zone        = "example.com"
+  name        = "example.com"
+  destination = "mail.example.com"
+  priority    = 10
+}
+```
+
+### TXT Record (SPF)
+
+```hcl
+resource "zone_dns_txt_record" "spf" {
+  zone        = "example.com"
+  name        = "example.com"
+  destination = "v=spf1 include:_spf.google.com ~all"
+}
+```
+
+### NS Record
+
+```hcl
+resource "zone_dns_ns_record" "subdomain" {
+  zone        = "example.com"
+  name        = "subdomain.example.com"
+  destination = "ns1.otherdns.com"
+}
+```
+
+### SRV Record
+
+```hcl
+resource "zone_dns_srv_record" "sip" {
+  zone        = "example.com"
+  name        = "_sip._tcp.example.com"
+  destination = "sipserver.example.com"
+  priority    = 10
+  weight      = 5
+  port        = 5060
+}
+```
+
+### CAA Record
+
+```hcl
+resource "zone_dns_caa_record" "letsencrypt" {
+  zone        = "example.com"
+  name        = "example.com"
+  destination = "letsencrypt.org"
+  flag        = 0
+  tag         = "issue"
+}
+```
+
+### TLSA Record (DANE)
+
+```hcl
+resource "zone_dns_tlsa_record" "https" {
+  zone              = "example.com"
+  name              = "_443._tcp.example.com"
+  destination       = "abc123def456..."
+  certificate_usage = 3
+  selector          = 1
+  matching_type     = 1
+}
+```
+
+### SSHFP Record
+
+```hcl
+resource "zone_dns_sshfp_record" "server" {
+  zone        = "example.com"
+  name        = "server.example.com"
+  destination = "abc123def456..."
+  algorithm   = 4  # Ed25519
+  type        = 2  # SHA-256
+}
+```
+
+### URL Redirect Record
+
+```hcl
+resource "zone_dns_url_record" "redirect" {
+  zone          = "example.com"
+  name          = "old.example.com"
+  destination   = "https://new.example.com/page"
+  redirect_type = 301
+}
+```
+
+### Data Source: DNS Zone
+
+```hcl
+data "zone_dns_zone" "main" {
+  name = "example.com"
+}
+
+output "zone_active" {
+  value = data.zone_dns_zone.main.active
+}
+```
+
+## Importing Existing Resources
+
+All resources support importing using the format `zone/record_id`:
+
+```bash
+terraform import zone_dns_a_record.www example.com/123
+```
+
+## API Rate Limits
+
+The Zone.EU API has a rate limit of 60 requests per minute per IP address. The provider does not currently implement rate limiting, so be cautious with large configurations.
+
+## Developing the Provider
+
+If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.21+ is *required*).
+
+To compile the provider, run:
 
 ```sh
-$ make testacc
+go build -o terraform-provider-zone_eu
 ```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This provider is distributed under the [Mozilla Public License 2.0](LICENSE).
