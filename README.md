@@ -56,9 +56,9 @@ The Zone.EU API supports many other services that are not yet implemented in thi
 ### Building from source
 
 ```bash
-git clone https://github.com/terraform-providers/terraform-provider-zone_eu.git
+git clone https://github.com/kepsic/terraform-provider-zone_eu.git
 cd terraform-provider-zone_eu
-go build -o terraform-provider-zone_eu
+go build -o terraform-provider-zoneeu
 ```
 
 ### Installing locally
@@ -68,11 +68,11 @@ Copy the built binary to your Terraform plugins directory:
 ```bash
 # Linux/macOS
 mkdir -p ~/.terraform.d/plugins
-cp terraform-provider-zone_eu ~/.terraform.d/plugins/
+cp terraform-provider-zoneeu ~/.terraform.d/plugins/
 
 # Or for Terraform 0.13+
 mkdir -p ~/.terraform.d/plugins/registry.terraform.io/kepsic/zoneeu/1.0.0/darwin_amd64/
-cp terraform-provider-zone_eu ~/.terraform.d/plugins/registry.terraform.io/kepsic/zoneeu/1.0.0/darwin_amd64/
+cp terraform-provider-zoneeu ~/.terraform.d/plugins/registry.terraform.io/kepsic/zoneeu/1.0.0/darwin_amd64/
 ```
 
 ## Configuration
@@ -80,6 +80,14 @@ cp terraform-provider-zone_eu ~/.terraform.d/plugins/registry.terraform.io/kepsi
 ### Provider Configuration
 
 ```hcl
+terraform {
+  required_providers {
+    zoneeu = {
+      source = "kepsic/zoneeu"
+    }
+  }
+}
+
 provider "zoneeu" {
   username = "your-zoneid-username"
   api_key  = "your-zoneid-api-key"
@@ -337,7 +345,7 @@ If you wish to work on the provider, you'll first need [Go](http://www.golang.or
 To compile the provider, run:
 
 ```sh
-go build -o terraform-provider-zone_eu
+go build -o terraform-provider-zoneeu
 ```
 
 ## Contributing
