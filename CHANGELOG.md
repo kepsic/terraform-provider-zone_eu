@@ -16,15 +16,22 @@ All notable changes to the Zone.EU Terraform Provider will be documented in this
   - URL records: URL format validation and redirect type validation (301, 302)
 - Context support in HTTP client for proper cancellation
 - ID attribute for `zone_domain` data source
+- `FindAllXXXRecordsByName` functions in client for all DNS record types to handle duplicate records
 
 ### Fixed
 - Delete operations are now idempotent - 404 errors are ignored for already-deleted resources
 - Removed incorrect `UseStateForUnknown()` plan modifiers from required mutable fields
 - Domain resource now properly handles 404 errors in Read method
 - Domain data source now properly sets ID attribute
+- **Duplicate DNS records handling**: When `force_recreate = true` and a `zone_conflict` error occurs during update, the provider now:
+  - Finds ALL records with the same name (not just the first one)
+  - Deletes all duplicate records
+  - Creates a fresh record with the desired configuration
+  - This fixes the issue where duplicate CNAME, A, AAAA, TXT, MX, NS, SRV, CAA, SSHFP, TLSA, and URL records would cause update failures
 
 ### Changed
 - HTTP client now uses `context.Context` for request cancellation support
+- Update operations for all DNS record types now handle `zone_conflict` errors gracefully when `force_recreate` is enabled
 
 ## [1.0.0] - Initial Release
 

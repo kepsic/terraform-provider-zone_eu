@@ -322,6 +322,32 @@ func (c *Client) FindARecordByNameWithContext(ctx context.Context, zone, name st
 	return nil, nil // Not found
 }
 
+// FindAllARecordsByName finds ALL A records with matching name in a zone
+func (c *Client) FindAllARecordsByName(zone, name string) ([]DNSRecord, error) {
+	return c.FindAllARecordsByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindAllARecordsByNameWithContext(ctx context.Context, zone, name string) ([]DNSRecord, error) {
+	records, err := c.ListARecordsWithContext(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+
+	var matches []DNSRecord
+	for _, r := range records {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
+			matches = append(matches, r)
+		}
+	}
+	return matches, nil
+}
+
 func (c *Client) GetARecord(zone, id string) (*DNSRecord, error) {
 	return c.GetARecordWithContext(context.Background(), zone, id)
 }
@@ -409,6 +435,32 @@ func (c *Client) FindAAAARecordByNameWithContext(ctx context.Context, zone, name
 		}
 	}
 	return nil, nil // Not found
+}
+
+// FindAllAAAARecordsByName finds ALL AAAA records with matching name in a zone
+func (c *Client) FindAllAAAARecordsByName(zone, name string) ([]DNSRecord, error) {
+	return c.FindAllAAAARecordsByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindAllAAAARecordsByNameWithContext(ctx context.Context, zone, name string) ([]DNSRecord, error) {
+	records, err := c.ListAAAARecordsWithContext(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+
+	var matches []DNSRecord
+	for _, r := range records {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
+			matches = append(matches, r)
+		}
+	}
+	return matches, nil
 }
 
 func (c *Client) GetAAAARecord(zone, id string) (*DNSRecord, error) {
@@ -500,6 +552,32 @@ func (c *Client) FindCNAMERecordByNameWithContext(ctx context.Context, zone, nam
 	return nil, nil // Not found
 }
 
+// FindAllCNAMERecordsByName finds ALL CNAME records with matching name in a zone
+func (c *Client) FindAllCNAMERecordsByName(zone, name string) ([]DNSRecord, error) {
+	return c.FindAllCNAMERecordsByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindAllCNAMERecordsByNameWithContext(ctx context.Context, zone, name string) ([]DNSRecord, error) {
+	records, err := c.ListCNAMERecordsWithContext(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+
+	var matches []DNSRecord
+	for _, r := range records {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
+			matches = append(matches, r)
+		}
+	}
+	return matches, nil
+}
+
 func (c *Client) GetCNAMERecord(zone, id string) (*DNSRecord, error) {
 	return c.GetCNAMERecordWithContext(context.Background(), zone, id)
 }
@@ -587,6 +665,32 @@ func (c *Client) FindMXRecordByNameWithContext(ctx context.Context, zone, name s
 		}
 	}
 	return nil, nil // Not found
+}
+
+// FindAllMXRecordsByName finds ALL MX records with matching name in a zone
+func (c *Client) FindAllMXRecordsByName(zone, name string) ([]DNSRecord, error) {
+	return c.FindAllMXRecordsByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindAllMXRecordsByNameWithContext(ctx context.Context, zone, name string) ([]DNSRecord, error) {
+	records, err := c.ListMXRecordsWithContext(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+
+	var matches []DNSRecord
+	for _, r := range records {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
+			matches = append(matches, r)
+		}
+	}
+	return matches, nil
 }
 
 func (c *Client) GetMXRecord(zone, id string) (*DNSRecord, error) {
@@ -678,6 +782,32 @@ func (c *Client) FindTXTRecordByNameWithContext(ctx context.Context, zone, name 
 	return nil, nil // Not found
 }
 
+// FindAllTXTRecordsByName finds ALL TXT records with matching name in a zone
+func (c *Client) FindAllTXTRecordsByName(zone, name string) ([]DNSRecord, error) {
+	return c.FindAllTXTRecordsByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindAllTXTRecordsByNameWithContext(ctx context.Context, zone, name string) ([]DNSRecord, error) {
+	records, err := c.ListTXTRecordsWithContext(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+
+	var matches []DNSRecord
+	for _, r := range records {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
+			matches = append(matches, r)
+		}
+	}
+	return matches, nil
+}
+
 func (c *Client) GetTXTRecord(zone, id string) (*DNSRecord, error) {
 	return c.GetTXTRecordWithContext(context.Background(), zone, id)
 }
@@ -765,6 +895,32 @@ func (c *Client) FindNSRecordByNameWithContext(ctx context.Context, zone, name s
 		}
 	}
 	return nil, nil // Not found
+}
+
+// FindAllNSRecordsByName finds ALL NS records with matching name in a zone
+func (c *Client) FindAllNSRecordsByName(zone, name string) ([]DNSRecord, error) {
+	return c.FindAllNSRecordsByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindAllNSRecordsByNameWithContext(ctx context.Context, zone, name string) ([]DNSRecord, error) {
+	records, err := c.ListNSRecordsWithContext(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+
+	var matches []DNSRecord
+	for _, r := range records {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
+			matches = append(matches, r)
+		}
+	}
+	return matches, nil
 }
 
 func (c *Client) GetNSRecord(zone, id string) (*DNSRecord, error) {
@@ -856,6 +1012,32 @@ func (c *Client) FindSRVRecordByNameWithContext(ctx context.Context, zone, name 
 	return nil, nil // Not found
 }
 
+// FindAllSRVRecordsByName finds ALL SRV records with matching name in a zone
+func (c *Client) FindAllSRVRecordsByName(zone, name string) ([]DNSRecord, error) {
+	return c.FindAllSRVRecordsByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindAllSRVRecordsByNameWithContext(ctx context.Context, zone, name string) ([]DNSRecord, error) {
+	records, err := c.ListSRVRecordsWithContext(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+
+	var matches []DNSRecord
+	for _, r := range records {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
+			matches = append(matches, r)
+		}
+	}
+	return matches, nil
+}
+
 func (c *Client) GetSRVRecord(zone, id string) (*DNSRecord, error) {
 	return c.GetSRVRecordWithContext(context.Background(), zone, id)
 }
@@ -943,6 +1125,32 @@ func (c *Client) FindCAARecordByNameWithContext(ctx context.Context, zone, name 
 		}
 	}
 	return nil, nil // Not found
+}
+
+// FindAllCAARecordsByName finds ALL CAA records with matching name in a zone
+func (c *Client) FindAllCAARecordsByName(zone, name string) ([]DNSRecord, error) {
+	return c.FindAllCAARecordsByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindAllCAARecordsByNameWithContext(ctx context.Context, zone, name string) ([]DNSRecord, error) {
+	records, err := c.ListCAARecordsWithContext(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+
+	var matches []DNSRecord
+	for _, r := range records {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
+			matches = append(matches, r)
+		}
+	}
+	return matches, nil
 }
 
 func (c *Client) GetCAARecord(zone, id string) (*DNSRecord, error) {
@@ -1034,6 +1242,32 @@ func (c *Client) FindTLSARecordByNameWithContext(ctx context.Context, zone, name
 	return nil, nil // Not found
 }
 
+// FindAllTLSARecordsByName finds ALL TLSA records with matching name in a zone
+func (c *Client) FindAllTLSARecordsByName(zone, name string) ([]DNSRecord, error) {
+	return c.FindAllTLSARecordsByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindAllTLSARecordsByNameWithContext(ctx context.Context, zone, name string) ([]DNSRecord, error) {
+	records, err := c.ListTLSARecordsWithContext(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+
+	var matches []DNSRecord
+	for _, r := range records {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
+			matches = append(matches, r)
+		}
+	}
+	return matches, nil
+}
+
 func (c *Client) GetTLSARecord(zone, id string) (*DNSRecord, error) {
 	return c.GetTLSARecordWithContext(context.Background(), zone, id)
 }
@@ -1123,6 +1357,32 @@ func (c *Client) FindSSHFPRecordByNameWithContext(ctx context.Context, zone, nam
 	return nil, nil // Not found
 }
 
+// FindAllSSHFPRecordsByName finds ALL SSHFP records with matching name in a zone
+func (c *Client) FindAllSSHFPRecordsByName(zone, name string) ([]DNSRecord, error) {
+	return c.FindAllSSHFPRecordsByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindAllSSHFPRecordsByNameWithContext(ctx context.Context, zone, name string) ([]DNSRecord, error) {
+	records, err := c.ListSSHFPRecordsWithContext(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+
+	var matches []DNSRecord
+	for _, r := range records {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
+			matches = append(matches, r)
+		}
+	}
+	return matches, nil
+}
+
 func (c *Client) GetSSHFPRecord(zone, id string) (*DNSRecord, error) {
 	return c.GetSSHFPRecordWithContext(context.Background(), zone, id)
 }
@@ -1210,6 +1470,32 @@ func (c *Client) FindURLRecordByNameWithContext(ctx context.Context, zone, name 
 		}
 	}
 	return nil, nil // Not found
+}
+
+// FindAllURLRecordsByName finds ALL URL records with matching name in a zone
+func (c *Client) FindAllURLRecordsByName(zone, name string) ([]DNSRecord, error) {
+	return c.FindAllURLRecordsByNameWithContext(context.Background(), zone, name)
+}
+
+func (c *Client) FindAllURLRecordsByNameWithContext(ctx context.Context, zone, name string) ([]DNSRecord, error) {
+	records, err := c.ListURLRecordsWithContext(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize the search name - strip zone suffix if present
+	zoneSuffix := "." + zone
+	searchName := strings.TrimSuffix(name, zoneSuffix)
+
+	var matches []DNSRecord
+	for _, r := range records {
+		// Normalize the record name as well
+		recordName := strings.TrimSuffix(r.Name, zoneSuffix)
+		if recordName == searchName || r.Name == name {
+			matches = append(matches, r)
+		}
+	}
+	return matches, nil
 }
 
 func (c *Client) GetURLRecord(zone, id string) (*DNSRecord, error) {

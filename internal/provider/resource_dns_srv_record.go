@@ -262,6 +262,43 @@ func (r *DNSSRVRecordResource) Update(ctx context.Context, req resource.UpdateRe
 
 	_, err = r.client.UpdateSRVRecordWithContext(ctx, zone, recordID, record)
 	if err != nil {
+		// Handle zone_conflict when force_recreate is enabled
+		if strings.Contains(err.Error(), "zone_conflict") && data.ForceRecreate.ValueBool() {
+			tflog.Info(ctx, "zone_conflict during update with force_recreate=true, deleting all duplicates and recreating")
+			
+			// Find and delete ALL records with this name (handles duplicates)
+			allRecords, findErr := r.client.FindAllSRVRecordsByNameWithContext(ctx, zone, data.Name.ValueString())
+			if findErr != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to find existing records: %s", findErr))
+				return
+			}
+			
+			// Delete all matching records
+			for _, rec := range allRecords {
+				deleteErr := r.client.DeleteSRVRecordWithContext(ctx, zone, rec.ID)
+				if deleteErr != nil {
+					// Ignore 404 errors
+					if !strings.Contains(deleteErr.Error(), "404") {
+						tflog.Warn(ctx, fmt.Sprintf("Failed to delete duplicate record %s: %s", rec.ID, deleteErr))
+					}
+				}
+			}
+			
+			// Create fresh record
+			created, createErr := r.client.CreateSRVRecordWithContext(ctx, zone, record)
+			if createErr != nil {
+				resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to recreate SRV record after deleting duplicates: %s", createErr))
+				return
+			}
+			
+			// Update state with new record ID
+			data.RecordID = types.StringValue(created.ID)
+			data.ID = types.StringValue(fmt.Sprintf("%s/%s", zone, created.ID))
+			tflog.Trace(ctx, "recreated SRV record after deleting duplicates")
+			resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+			return
+		}
+		
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update SRV record, got error: %s", err))
 		return
 	}
